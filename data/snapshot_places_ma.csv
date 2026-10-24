@@ -1,0 +1,85 @@
+locationid,locationname,geo_level,stateabbr,measureid,measure_label,measure_kind,data_value,data_value_type,low_ci,high_ci,total_population,data_year,source,release_year
+25013,Hampden,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,8.1,Crude prevalence,6.3,9.9,460291,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,6.6,Crude prevalence,5.1,8.4,768425,2023,CDC PLACES,2025
+25009,Essex,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,6.2,Crude prevalence,4.7,7.9,810089,2023,CDC PLACES,2025
+25005,Bristol,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,5.9,Crude prevalence,4.5,7.6,581841,2023,CDC PLACES,2025
+25027,Worcester,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,5.4,Crude prevalence,4.3,6.8,866866,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,4.8,Crude prevalence,3.5,6.1,126818,2023,CDC PLACES,2025
+25011,Franklin,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,4.7,Crude prevalence,3.5,6.2,70836,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,4.5,Crude prevalence,3.5,5.8,14444,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,4.4,Crude prevalence,3.3,5.6,535308,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,4.2,Crude prevalence,3.1,5.5,162502,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,4.0,Crude prevalence,3.1,5.2,1623952,2023,CDC PLACES,2025
+25007,Dukes,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,3.9,Crude prevalence,2.9,5.2,20819,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,3.8,Crude prevalence,3.0,4.9,727473,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,ACCESS2,Current lack of health insurance among adults aged 18-64 years,access,3.6,Crude prevalence,2.7,4.7,231735,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,BPHIGH,High blood pressure among adults,condition,38.2,Crude prevalence,34.2,42.2,231735,2023,CDC PLACES,2025
+25011,Franklin,county,MA,BPHIGH,High blood pressure among adults,condition,36.3,Crude prevalence,32.2,40.4,70836,2023,CDC PLACES,2025
+25007,Dukes,county,MA,BPHIGH,High blood pressure among adults,condition,36.0,Crude prevalence,31.6,40.4,20819,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,BPHIGH,High blood pressure among adults,condition,34.8,Crude prevalence,30.9,38.4,126818,2023,CDC PLACES,2025
+25013,Hampden,county,MA,BPHIGH,High blood pressure among adults,condition,34.7,Crude prevalence,31.4,37.8,460291,2023,CDC PLACES,2025
+25005,Bristol,county,MA,BPHIGH,High blood pressure among adults,condition,33.5,Crude prevalence,30.5,36.6,581841,2023,CDC PLACES,2025
+25027,Worcester,county,MA,BPHIGH,High blood pressure among adults,condition,33.2,Crude prevalence,30.2,36.1,866866,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,BPHIGH,High blood pressure among adults,condition,32.6,Crude prevalence,29.5,35.7,535308,2023,CDC PLACES,2025
+25009,Essex,county,MA,BPHIGH,High blood pressure among adults,condition,32.1,Crude prevalence,29.1,35.1,810089,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,BPHIGH,High blood pressure among adults,condition,29.8,Crude prevalence,27.0,32.8,727473,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,BPHIGH,High blood pressure among adults,condition,29.4,Crude prevalence,25.4,33.7,14444,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,BPHIGH,High blood pressure among adults,condition,27.6,Crude prevalence,25.2,30.0,1623952,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,BPHIGH,High blood pressure among adults,condition,27.4,Crude prevalence,25.0,29.9,768425,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,BPHIGH,High blood pressure among adults,condition,26.7,Crude prevalence,23.7,29.9,162502,2023,CDC PLACES,2025
+25013,Hampden,county,MA,CASTHMA,Current asthma among adults,condition,12.7,Crude prevalence,11.3,14.2,460291,2023,CDC PLACES,2025
+25005,Bristol,county,MA,CASTHMA,Current asthma among adults,condition,12.6,Crude prevalence,11.3,14.2,581841,2023,CDC PLACES,2025
+25027,Worcester,county,MA,CASTHMA,Current asthma among adults,condition,12.1,Crude prevalence,10.8,13.5,866866,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,CASTHMA,Current asthma among adults,condition,12.1,Crude prevalence,10.7,13.6,162502,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,CASTHMA,Current asthma among adults,condition,12.1,Crude prevalence,10.7,13.4,535308,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,CASTHMA,Current asthma among adults,condition,12.0,Crude prevalence,10.5,13.4,126818,2023,CDC PLACES,2025
+25011,Franklin,county,MA,CASTHMA,Current asthma among adults,condition,11.8,Crude prevalence,10.4,13.4,70836,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,CASTHMA,Current asthma among adults,condition,11.5,Crude prevalence,10.0,12.9,231735,2023,CDC PLACES,2025
+25007,Dukes,county,MA,CASTHMA,Current asthma among adults,condition,11.5,Crude prevalence,10.1,12.9,20819,2023,CDC PLACES,2025
+25009,Essex,county,MA,CASTHMA,Current asthma among adults,condition,11.5,Crude prevalence,10.3,12.9,810089,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,CASTHMA,Current asthma among adults,condition,11.4,Crude prevalence,10.2,12.6,768425,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,CASTHMA,Current asthma among adults,condition,11.1,Crude prevalence,10.0,12.3,1623952,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,CASTHMA,Current asthma among adults,condition,10.9,Crude prevalence,9.6,12.3,14444,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,CASTHMA,Current asthma among adults,condition,10.7,Crude prevalence,9.6,12.1,727473,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,85.3,Crude prevalence,82.6,87.5,231735,2023,CDC PLACES,2025
+25007,Dukes,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,83.4,Crude prevalence,80.1,86.3,20819,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,82.1,Crude prevalence,79.3,84.6,535308,2023,CDC PLACES,2025
+25011,Franklin,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,82.1,Crude prevalence,78.8,85.0,70836,2023,CDC PLACES,2025
+25005,Bristol,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,81.9,Crude prevalence,79.2,84.4,581841,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,81.7,Crude prevalence,78.6,84.4,126818,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,81.5,Crude prevalence,79.0,84.1,727473,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,81.4,Crude prevalence,78.1,84.4,14444,2023,CDC PLACES,2025
+25027,Worcester,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,81.3,Crude prevalence,78.7,83.7,866866,2023,CDC PLACES,2025
+25009,Essex,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,81.1,Crude prevalence,78.4,83.6,810089,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,80.6,Crude prevalence,77.3,83.6,162502,2023,CDC PLACES,2025
+25013,Hampden,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,80.4,Crude prevalence,77.4,83.1,460291,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,79.9,Crude prevalence,77.5,82.3,1623952,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,CHECKUP,Visits to doctor for routine checkup within the past year among adults,access,78.5,Crude prevalence,75.8,81.1,768425,2023,CDC PLACES,2025
+25013,Hampden,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,7.7,Crude prevalence,6.3,9.2,460291,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,7.7,Crude prevalence,6.2,9.3,126818,2023,CDC PLACES,2025
+25011,Franklin,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,7.7,Crude prevalence,6.2,9.4,70836,2023,CDC PLACES,2025
+25005,Bristol,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,7.6,Crude prevalence,6.2,9.1,581841,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,7.3,Crude prevalence,5.6,9.3,231735,2023,CDC PLACES,2025
+25007,Dukes,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,6.8,Crude prevalence,5.3,8.6,20819,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,6.4,Crude prevalence,5.2,7.8,535308,2023,CDC PLACES,2025
+25009,Essex,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,6.3,Crude prevalence,5.1,7.7,810089,2023,CDC PLACES,2025
+25027,Worcester,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,6.3,Crude prevalence,5.1,7.7,866866,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,5.6,Crude prevalence,4.5,6.8,162502,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,5.1,Crude prevalence,4.2,5.9,768425,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,4.9,Crude prevalence,3.9,6.0,727473,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,4.6,Crude prevalence,3.6,5.6,1623952,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,4.6,Crude prevalence,3.6,5.7,14444,2023,CDC PLACES,2025
+25013,Hampden,county,MA,DIABETES,Diagnosed diabetes among adults,condition,12.1,Crude prevalence,10.5,13.8,460291,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.9,Crude prevalence,9.2,12.8,126818,2023,CDC PLACES,2025
+25005,Bristol,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.8,Crude prevalence,9.2,12.4,581841,2023,CDC PLACES,2025
+25011,Franklin,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.8,Crude prevalence,9.1,12.7,70836,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.7,Crude prevalence,8.9,12.8,231735,2023,CDC PLACES,2025
+25007,Dukes,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.6,Crude prevalence,8.8,12.4,20819,2023,CDC PLACES,2025
+25027,Worcester,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.4,Crude prevalence,9.0,11.9,866866,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.3,Crude prevalence,8.9,11.9,535308,2023,CDC PLACES,2025
+25009,Essex,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.3,Crude prevalence,8.8,11.8,810089,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,DIABETES,Diagnosed diabetes among adults,condition,9.3,Crude prevalence,8.1,10.5,768425,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,DIABETES,Diagnosed diabetes among adults,condition,9.0,Crude prevalence,7.7,10.5,727473,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,DIABETES,Diagnosed diabetes among adults,condition,8.6,Crude prevalence,7.2,10.1,14444,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,DIABETES,Diagnosed diabetes among adults,condition,8.5,Crude prevalence,7.3,9.6,1623952,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,DIABETES,Diagnosed diabetes among adults,condition,8.2,Crude prevalence,7.0,9.6,162502,2023,CDC PLACES,2025

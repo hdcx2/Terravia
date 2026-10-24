@@ -27,26 +27,56 @@ if (sidebar && menuToggle) {
   });
 }
 
+// Base URL of the Terravia chatbot API. Override before this script loads with
+//   <script>window.TERRAVIA_API = 'https://your-host';</script>
+// Empty string = same origin (when the API also serves the site).
+const TERRAVIA_API = (window.TERRAVIA_API || '').replace(/\/$/, '');
+
 const chatForm = document.querySelector('.chat-form');
 if (chatForm) {
   const input = chatForm.querySelector('input');
+  const sendBtn = chatForm.querySelector('button');
   const messages = document.querySelector('.chat-messages');
-  chatForm.addEventListener('submit', (event) => {
+
+  const addMessage = (text, who) => {
+    const el = document.createElement('p');
+    el.className = `chat-message ${who === 'user' ? 'user-message' : 'bot-message'}`;
+    // Preserve the answer's line breaks (CI lists, profiles).
+    el.textContent = text;
+    el.style.whiteSpace = 'pre-wrap';
+    messages.append(el);
+    messages.scrollTop = messages.scrollHeight;
+    return el;
+  };
+
+  chatForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const question = input.value.trim();
     if (!question) return;
 
-    const userMessage = document.createElement('p');
-    userMessage.className = 'chat-message user-message';
-    userMessage.textContent = question;
-    messages.append(userMessage);
-
-    const response = document.createElement('p');
-    response.className = 'chat-message bot-message';
-    response.textContent = 'I\u2019m a site guide for now. Try the About Us, Concerns, or Our Team links to explore Terravia. A health data assistant can be connected here later.';
-    messages.append(response);
+    addMessage(question, 'user');
     input.value = '';
-    input.focus();
-    messages.scrollTop = messages.scrollHeight;
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    const pending = addMessage('Thinking…', 'bot');
+    try {
+      const res = await fetch(`${TERRAVIA_API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      pending.textContent = data.answer;
+    } catch (err) {
+      pending.textContent =
+        'Sorry, the health data assistant is unavailable right now. Please try again shortly.';
+    } finally {
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+      messages.scrollTop = messages.scrollHeight;
+    }
   });
 }

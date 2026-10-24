@@ -1,0 +1,9 @@
+# Chatbot API (serves the agent to the static website).
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pandas>=2.2
+requests>=2.32
+
+# Optional: enables a live LLM provider (HOTSPOT_LLM_PROVIDER=openai|ollama).
+# The API runs fully without it via the rule-based parser.
+openai>=1.40

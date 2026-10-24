@@ -1,0 +1,14 @@
+{
+  "source": "CDC PLACES",
+  "dataset_id": "swc5-untb",
+  "dataset_url": "https://data.cdc.gov/resource/swc5-untb.json",
+  "release_year": 2025,
+  "geo_level": "county",
+  "state": "MA",
+  "data_year": 2023,
+  "data_value_type": "Crude prevalence",
+  "measures": ["DIABETES", "CASTHMA", "BPHIGH", "COPD", "ACCESS2", "CHECKUP"],
+  "row_count": 84,
+  "counties": 14,
+  "note": "Values are model-based estimates, not diagnosed case counts. 95% CIs of top-ranked counties often overlap; treat rankings as directional."
+}
