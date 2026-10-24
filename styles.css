@@ -953,15 +953,16 @@ body {
 }
 .map-legend-bar {
   display: block;
-  flex: 1 1 auto;
-  max-width: 260px;
+  width: 220px;
   height: 10px;
   border-radius: 6px;
   background: linear-gradient(90deg, #eaf2e9, #2f6b47);
 }
 .map-legend-label {
+  flex: none;
   color: #5c6b63;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .map-caption {
