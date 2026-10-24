@@ -7,7 +7,7 @@ Ask in plain language ("Where is diabetes highest?", "high asthma and low
 checkup areas") and get answers computed from the data, never from model memory,
 with the source, data year, and a model-based-estimate caveat on every result.
 
-- **Live site:** https://wilsonz347.github.io/Terravia/
+- **Live site:** https://wilsonz347.github.io/Terravia/index.html
 - **API:** https://terravia-api.onrender.com
 
 ## What it covers
