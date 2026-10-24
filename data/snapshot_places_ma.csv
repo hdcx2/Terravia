@@ -69,6 +69,20 @@ locationid,locationname,geo_level,stateabbr,measureid,measure_label,measure_kind
 25021,Norfolk,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,4.9,Crude prevalence,3.9,6.0,727473,2023,CDC PLACES,2025
 25017,Middlesex,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,4.6,Crude prevalence,3.6,5.6,1623952,2023,CDC PLACES,2025
 25019,Nantucket,county,MA,COPD,Chronic obstructive pulmonary disease among adults,condition,4.6,Crude prevalence,3.6,5.7,14444,2023,CDC PLACES,2025
+25005,Bristol,county,MA,CSMOKING,Current cigarette smoking among adults,condition,15.8,Crude prevalence,12.6,19.1,581841,2023,CDC PLACES,2025
+25013,Hampden,county,MA,CSMOKING,Current cigarette smoking among adults,condition,14.8,Crude prevalence,12.1,17.5,460291,2023,CDC PLACES,2025
+25011,Franklin,county,MA,CSMOKING,Current cigarette smoking among adults,condition,12.8,Crude prevalence,9.8,15.9,70836,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,CSMOKING,Current cigarette smoking among adults,condition,12.7,Crude prevalence,9.8,15.6,126818,2023,CDC PLACES,2025
+25027,Worcester,county,MA,CSMOKING,Current cigarette smoking among adults,condition,12.3,Crude prevalence,9.8,14.9,866866,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,CSMOKING,Current cigarette smoking among adults,condition,11.9,Crude prevalence,9.4,14.7,535308,2023,CDC PLACES,2025
+25009,Essex,county,MA,CSMOKING,Current cigarette smoking among adults,condition,11.4,Crude prevalence,9.0,13.9,810089,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,CSMOKING,Current cigarette smoking among adults,condition,11.1,Crude prevalence,8.9,13.4,768425,2023,CDC PLACES,2025
+25007,Dukes,county,MA,CSMOKING,Current cigarette smoking among adults,condition,10.8,Crude prevalence,8.2,13.8,20819,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,CSMOKING,Current cigarette smoking among adults,condition,10.5,Crude prevalence,8.0,13.6,231735,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,CSMOKING,Current cigarette smoking among adults,condition,9.7,Crude prevalence,7.6,12.2,162502,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,CSMOKING,Current cigarette smoking among adults,condition,9.2,Crude prevalence,7.0,11.5,727473,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,CSMOKING,Current cigarette smoking among adults,condition,9.1,Crude prevalence,7.1,11.4,1623952,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,CSMOKING,Current cigarette smoking among adults,condition,9.1,Crude prevalence,6.9,11.6,14444,2023,CDC PLACES,2025
 25013,Hampden,county,MA,DIABETES,Diagnosed diabetes among adults,condition,12.1,Crude prevalence,10.5,13.8,460291,2023,CDC PLACES,2025
 25003,Berkshire,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.9,Crude prevalence,9.2,12.8,126818,2023,CDC PLACES,2025
 25005,Bristol,county,MA,DIABETES,Diagnosed diabetes among adults,condition,10.8,Crude prevalence,9.2,12.4,581841,2023,CDC PLACES,2025
@@ -83,3 +97,31 @@ locationid,locationname,geo_level,stateabbr,measureid,measure_label,measure_kind
 25019,Nantucket,county,MA,DIABETES,Diagnosed diabetes among adults,condition,8.6,Crude prevalence,7.2,10.1,14444,2023,CDC PLACES,2025
 25017,Middlesex,county,MA,DIABETES,Diagnosed diabetes among adults,condition,8.5,Crude prevalence,7.3,9.6,1623952,2023,CDC PLACES,2025
 25015,Hampshire,county,MA,DIABETES,Diagnosed diabetes among adults,condition,8.2,Crude prevalence,7.0,9.6,162502,2023,CDC PLACES,2025
+25013,Hampden,county,MA,MHLTH,Frequent mental distress among adults,condition,18.9,Crude prevalence,16.7,21.1,460291,2023,CDC PLACES,2025
+25005,Bristol,county,MA,MHLTH,Frequent mental distress among adults,condition,18.6,Crude prevalence,16.5,21.2,581841,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,MHLTH,Frequent mental distress among adults,condition,17.4,Crude prevalence,14.9,20.1,162502,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,MHLTH,Frequent mental distress among adults,condition,17.3,Crude prevalence,15.3,19.4,768425,2023,CDC PLACES,2025
+25027,Worcester,county,MA,MHLTH,Frequent mental distress among adults,condition,17.2,Crude prevalence,15.1,19.3,866866,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,MHLTH,Frequent mental distress among adults,condition,16.9,Crude prevalence,14.7,19.1,126818,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,MHLTH,Frequent mental distress among adults,condition,16.8,Crude prevalence,14.7,19.1,535308,2023,CDC PLACES,2025
+25011,Franklin,county,MA,MHLTH,Frequent mental distress among adults,condition,16.1,Crude prevalence,13.8,18.5,70836,2023,CDC PLACES,2025
+25009,Essex,county,MA,MHLTH,Frequent mental distress among adults,condition,15.3,Crude prevalence,13.4,17.3,810089,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,MHLTH,Frequent mental distress among adults,condition,14.8,Crude prevalence,13.0,16.7,1623952,2023,CDC PLACES,2025
+25007,Dukes,county,MA,MHLTH,Frequent mental distress among adults,condition,14.7,Crude prevalence,12.5,17.0,20819,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,MHLTH,Frequent mental distress among adults,condition,14.6,Crude prevalence,12.7,16.6,727473,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,MHLTH,Frequent mental distress among adults,condition,14.3,Crude prevalence,12.3,16.4,14444,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,MHLTH,Frequent mental distress among adults,condition,13.8,Crude prevalence,11.8,16.0,231735,2023,CDC PLACES,2025
+25013,Hampden,county,MA,OBESITY,Obesity among adults,condition,34.9,Crude prevalence,30.1,40.1,460291,2023,CDC PLACES,2025
+25027,Worcester,county,MA,OBESITY,Obesity among adults,condition,32.6,Crude prevalence,28.3,36.9,866866,2023,CDC PLACES,2025
+25005,Bristol,county,MA,OBESITY,Obesity among adults,condition,32.1,Crude prevalence,27.8,36.9,581841,2023,CDC PLACES,2025
+25003,Berkshire,county,MA,OBESITY,Obesity among adults,condition,31.2,Crude prevalence,25.4,36.7,126818,2023,CDC PLACES,2025
+25009,Essex,county,MA,OBESITY,Obesity among adults,condition,30.0,Crude prevalence,25.6,34.5,810089,2023,CDC PLACES,2025
+25023,Plymouth,county,MA,OBESITY,Obesity among adults,condition,29.7,Crude prevalence,25.4,34.7,535308,2023,CDC PLACES,2025
+25019,Nantucket,county,MA,OBESITY,Obesity among adults,condition,27.7,Crude prevalence,20.6,35.7,14444,2023,CDC PLACES,2025
+25001,Barnstable,county,MA,OBESITY,Obesity among adults,condition,26.3,Crude prevalence,21.2,31.8,231735,2023,CDC PLACES,2025
+25011,Franklin,county,MA,OBESITY,Obesity among adults,condition,26.3,Crude prevalence,20.8,32.8,70836,2023,CDC PLACES,2025
+25007,Dukes,county,MA,OBESITY,Obesity among adults,condition,25.5,Crude prevalence,19.1,32.7,20819,2023,CDC PLACES,2025
+25025,Suffolk,county,MA,OBESITY,Obesity among adults,condition,24.2,Crude prevalence,20.7,27.8,768425,2023,CDC PLACES,2025
+25017,Middlesex,county,MA,OBESITY,Obesity among adults,condition,23.8,Crude prevalence,20.5,27.2,1623952,2023,CDC PLACES,2025
+25021,Norfolk,county,MA,OBESITY,Obesity among adults,condition,23.5,Crude prevalence,19.9,27.8,727473,2023,CDC PLACES,2025
+25015,Hampshire,county,MA,OBESITY,Obesity among adults,condition,22.2,Crude prevalence,17.9,27.2,162502,2023,CDC PLACES,2025

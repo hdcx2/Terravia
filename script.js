@@ -14,7 +14,7 @@ if (sidebar && menuToggle) {
       try {
         localStorage.setItem(SIDEBAR_KEY, expanded ? '1' : '0');
       } catch (err) {
-        /* storage unavailable (private mode) — state just won't persist */
+        /* storage unavailable (private mode): state just won't persist */
       }
     }
   };
@@ -25,7 +25,7 @@ if (sidebar && menuToggle) {
   try {
     remembered = localStorage.getItem(SIDEBAR_KEY) === '1';
   } catch (err) {
-    /* storage unavailable — default to collapsed */
+    /* storage unavailable: default to collapsed */
   }
   const startCompact = window.matchMedia('(max-width: 650px)').matches;
   if (remembered && !startCompact) {
@@ -92,11 +92,13 @@ if (chatForm) {
     scrollToEnd();
   };
 
-  chatForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const question = input.value.trim();
+  const starters = document.getElementById('chat-starters');
+
+  const ask = async (question) => {
+    question = (question || '').trim();
     if (!question) return;
 
+    if (starters) starters.hidden = true;   // hide examples once chatting
     addMessage(question, 'user');
     input.value = '';
     input.disabled = true;
@@ -130,12 +132,24 @@ if (chatForm) {
       input.focus();
       scrollToEnd();
     }
+  };
+
+  chatForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    ask(input.value);
   });
+
+  // Clickable example questions so users know what they can ask.
+  if (starters) {
+    starters.querySelectorAll('.chat-starter').forEach((btn) => {
+      btn.addEventListener('click', () => ask(btn.textContent));
+    });
+  }
 }
 
 
 /* ---------------------------------------------------------------------------
- * Interactive choropleth map (D3, SVG only — no tiles, no API key, no watermark)
+ * Interactive choropleth map (D3, SVG only: no tiles, no API key, no watermark)
  * Draws MA county polygons from the API and colors them by a chosen condition.
  * ------------------------------------------------------------------------- */
 function initTerraviaMap() {
@@ -176,7 +190,7 @@ function initTerraviaMap() {
     tooltip.hidden = false;
     tooltip.innerHTML =
       `<strong>${county}</strong><br>${d.label}: ${d.value.toFixed(1)}%` +
-      `<br><span class="map-tip-ci">95% CI ${d.low.toFixed(1)}–${d.high.toFixed(1)}</span>`;
+      `<br><span class="map-tip-ci">95% CI ${d.low.toFixed(1)} to ${d.high.toFixed(1)}</span>`;
     const r = mapSvgEl.getBoundingClientRect();
     tooltip.style.left = `${evt.clientX - r.left + 12}px`;
     tooltip.style.top = `${evt.clientY - r.top + 12}px`;
@@ -214,7 +228,7 @@ function initTerraviaMap() {
 
       drawLegend(data.min, data.max);
       caption.textContent =
-        `${data.label} — ${data.source}, ${data.data_year}. Shades run county low to high; values are model-based estimates.`;
+        `${data.label}: ${data.source}, ${data.data_year}. Shades run county low to high; values are model-based estimates.`;
     } catch (err) {
       caption.textContent = `Map data error: ${err.message}`;
       console.error('Terravia map render error:', err);

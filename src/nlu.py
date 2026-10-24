@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from . import config, geo
+from . import config, geo, knowledge
 from .llm import LLMProvider, get_provider
 
 # Intents
@@ -26,17 +26,23 @@ RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE = (
 COUNTY_PROFILE = "county_profile"   # a county named with no measure -> all six
 LIST_SUPPORTED = "list_supported"   # unsupported condition -> show capabilities
 UNSUPPORTED_YEAR = "unsupported_year"  # a year other than the data year
+DATASET_INFO = "dataset_info"       # questions ABOUT the data (counties, years, coverage)
+EXPLAIN = "explain"                 # conceptual question -> RAG over our own docs
+GREETING = "greeting"               # hi / thanks / chit-chat -> friendly, inviting reply
 VALID_INTENTS = {RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE,
-                 COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR}
+                 COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR, DATASET_INFO,
+                 EXPLAIN, GREETING}
 
 
 @dataclass
 class StructuredQuery:
     intent: str
     condition: str | None = None
+    conditions: list[str] | None = None  # >1 condition named -> answer each
     access_measure: str | None = None
     area_filter: str | None = None
     area_in: list[str] | None = None   # resolved county set for "near X"
+    snippet_ids: list[str] | None = None  # retrieved KB snippets for EXPLAIN
     sort: str = "desc"
     limit: int = 10
     parser: str = "rule"          # "guardrail" | "rule" | "llm" (the path taken)
@@ -55,6 +61,17 @@ _MEDICAL_PATTERNS = [
     r"\b(at|my) risk\b", r"\bam i at risk\b", r"\bchances? of (getting|having)\b",
     r"\bshould i be worried\b", r"\bworried (that|i|about my)\b",
     r"\bi('?m| am) (worried|concerned|afraid)\b",
+]
+# Clinical/educational questions about the NATURE of a disease (causes,
+# symptoms, prevention, transmission): not where it's common. We don't answer
+# these from county data; redirect to what we DO offer.
+_CLINICAL_INFO_PATTERNS = [
+    r"\bwhat causes?\b", r"\bwhat('?s| is) the cause\b", r"\bwhy do (people|you)\b",
+    r"\bhow (do|can) (you|i|people|someone) (prevent|avoid|get|catch|develop|cure|treat)\b",
+    r"\bhow to (prevent|avoid|treat|cure|manage)\b",
+    r"\bis\b.*\b(genetic|hereditary|contagious|curable|preventable|dangerous)\b",
+    r"\bsymptoms? of\b", r"\bsigns? of\b", r"\bwhat (is|are)\b.*\b(symptoms?|causes?)\b",
+    r"\bhow (serious|bad|deadly) is\b",
 ]
 # A specific person (first or third person). NOT "patients"/"people"/"adults"
 # in aggregate, which are population phrasings used in legitimate queries.
@@ -82,8 +99,7 @@ _PLANNING_ALLOW = [
 # Naming any of these means the user wants something we do not serve.
 _UNSUPPORTED_TOPICS = [
     r"\bcancer\b", r"\bheart disease\b", r"\bheart attack\b", r"\bstroke\b",
-    r"\bdepression\b", r"\bmental (health|distress)\b", r"\banxiety\b",
-    r"\bobesity\b", r"\boverweight\b", r"\bsmoking\b", r"\bcigarette\b",
+    r"\bdepression\b", r"\banxiety\b",
     r"\bsleep\b", r"\balcohol\b", r"\bdrinking\b", r"\bkidney\b", r"\bcholesterol\b",
     r"\bflu\b", r"\bcovid\b", r"\bhiv\b", r"\bdementia\b", r"\barthritis\b",
     r"\bcardiology\b", r"\bcardiac\b", r"\bcardiovascular\b",
@@ -150,6 +166,31 @@ def _names_unsupported_topic(text: str) -> bool:
     return any(re.search(p, t) for p in _UNSUPPORTED_TOPICS)
 
 
+def _asks_clinical_info(text: str) -> bool:
+    """True for 'what causes/symptoms/how to prevent X': clinical/educational
+    questions about a disease's nature that we don't answer from county data."""
+    t = text.lower()
+    return any(re.search(p, t) for p in _CLINICAL_INFO_PATTERNS)
+
+
+# Greetings / thanks / chit-chat: short, contentless messages -> friendly reply
+# that invites a real question instead of a cold refusal.
+_GREETING_PATTERNS = [
+    r"^\s*(hi|hey|hello|yo|hiya|howdy|greetings|sup)\b",
+    r"^\s*(good )?(morning|afternoon|evening)\b",
+    r"\bhow are you\b", r"\bwhat'?s up\b",
+    r"^\s*(thanks|thank you|thx|ty|cheers|nice|cool|ok|okay|got it)\s*[!.]*\s*$",
+    r"^\s*(who are you|what are you|what is this)\s*\??\s*$",
+]
+
+
+def _is_greeting(text: str) -> bool:
+    if _match_measure(text) is not None:      # a real question takes priority
+        return False
+    t = text.lower().strip()
+    return any(re.search(p, t) for p in _GREETING_PATTERNS)
+
+
 def _names_unsupported_year(text: str) -> int | None:
     """Return a 4-digit year mentioned that is NOT our data year, else None."""
     for m in re.finditer(r"\b(19|20)\d{2}\b", text):
@@ -157,6 +198,31 @@ def _names_unsupported_year(text: str) -> int | None:
         if y != DATA_YEAR:
             return y
     return None
+
+
+# Questions ABOUT the dataset itself (its coverage), not about a measure's value.
+# "what/which counties", "what conditions/measures", "what years", "how many
+# counties", "what data do you have", "where does the data come from", "coverage".
+_DATASET_INFO_PATTERNS = [
+    r"\bwhat (counties|conditions|measures|diseases|data|years?|sources?)\b",
+    r"\bwhich (counties|conditions|measures|diseases)\b",
+    r"\bhow many (counties|conditions|measures)\b",
+    r"\bwhat (can|do) you (cover|answer|know|have|support)\b",
+    r"\bwhat('?s| is) (covered|included|in the data|the data)\b",
+    r"\bwhere (does|is) (the|your) data (come from|from)\b",
+    r"\b(list|show)( me)? (the )?(counties|conditions|measures)\b",
+    r"\byour (coverage|data|dataset|sources?)\b",
+    r"\bdata (source|sources|coverage|year)\b",
+]
+
+
+def _is_dataset_info(text: str) -> bool:
+    """True if the question asks about the dataset's coverage, and does NOT name
+    a specific measure (a measure means they want values, not metadata)."""
+    if _match_measure(text) is not None:
+        return False
+    t = text.lower()
+    return any(re.search(p, t) for p in _DATASET_INFO_PATTERNS)
 
 
 def _bare_county(text: str) -> str | None:
@@ -178,6 +244,20 @@ def _is_uncertain(question: str, sq: StructuredQuery) -> bool:
     return any(re.search(c, ql) for c in _UNCERTAIN_CUES)
 
 
+def _maybe_explain(question: str, sq: StructuredQuery) -> StructuredQuery:
+    """If the structured path gave up (out_of_scope), try RAG over our own
+    knowledge base. If relevant snippets exist, answer conceptually (EXPLAIN)
+    instead of the generic capability message. Statistics are never produced
+    here: only authored project/data facts."""
+    if sq.intent != OUT_OF_SCOPE:
+        return sq
+    hits = knowledge.retrieve(question)
+    if hits:
+        return StructuredQuery(EXPLAIN, snippet_ids=[h.id for h in hits],
+                               parser=sq.parser if sq.parser != "rule" else "rule")
+    return sq
+
+
 # --- Stage 2: rule-based parser -------------------------------------------
 def rule_parse(question: str) -> StructuredQuery:
     q = question.strip()
@@ -189,10 +269,11 @@ def rule_parse(question: str) -> StructuredQuery:
 
     measures_found = [mid for mid in config.MEASURES
                       if any(a in q.lower() for a in config.MEASURES[mid].aliases)]
-    condition = next((m for m in measures_found
-                      if config.MEASURES[m].kind == "condition"), None)
+    conditions = [m for m in measures_found
+                  if config.MEASURES[m].kind == "condition"]
     access = next((m for m in measures_found
                    if config.MEASURES[m].kind == "access"), None)
+    condition = conditions[0] if conditions else None
 
     # access-gap: a condition AND an access word together
     if condition and access:
@@ -212,7 +293,9 @@ def rule_parse(question: str) -> StructuredQuery:
                                      "lowest", "least", "fewest", "areas",
                                      "counties", "list"))
     intent = LOOKUP if (area and not list_cue and not is_near) else RANKING
-    return StructuredQuery(intent, condition=primary,
+    # If the user named more than one condition, answer each of them.
+    multi = conditions if len(conditions) > 1 else None
+    return StructuredQuery(intent, condition=primary, conditions=multi,
                            area_filter=None if area_in else area,
                            area_in=area_in, sort=sort, parser="rule")
 
@@ -226,7 +309,8 @@ def validate(args: dict) -> StructuredQuery | None:
     if intent not in VALID_INTENTS:
         return None
 
-    if intent in (REFUSE_MEDICAL, OUT_OF_SCOPE, LIST_SUPPORTED):
+    if intent in (REFUSE_MEDICAL, OUT_OF_SCOPE, LIST_SUPPORTED, DATASET_INFO,
+                  UNSUPPORTED_YEAR):
         return StructuredQuery(intent, parser="llm")
 
     if intent == COUNTY_PROFILE:
@@ -283,9 +367,16 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
     # Personal-health/risk questions refuse, even if they name a condition.
     if _looks_medical(question):
         return StructuredQuery(REFUSE_MEDICAL, parser="guardrail")
+    # Greetings / thanks / chit-chat -> warm, inviting reply (not a refusal).
+    if _is_greeting(question):
+        return StructuredQuery(GREETING, parser="guardrail")
     # Unsupported health topic (cancer, obesity, ...) -> list what IS supported,
     # before any parsing, so we never show a ranking for an unnamed measure.
     if _names_unsupported_topic(question):
+        return StructuredQuery(LIST_SUPPORTED, parser="guardrail")
+    # Clinical/educational "what causes / symptoms / how to prevent X" -> we
+    # don't answer disease-nature questions from county data; redirect.
+    if _asks_clinical_info(question):
         return StructuredQuery(LIST_SUPPORTED, parser="guardrail")
     # A year other than the data year -> say we only have 2023, before the LLM.
     if _names_unsupported_year(question) is not None:
@@ -294,13 +385,17 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
     bare = _bare_county(question)
     if bare is not None:
         return StructuredQuery(COUNTY_PROFILE, area_filter=bare, parser="guardrail")
+    # Questions about the dataset itself (which counties, years, coverage) ->
+    # answer from the real data rather than the generic capability message.
+    if _is_dataset_info(question):
+        return StructuredQuery(DATASET_INFO, parser="guardrail")
 
     # 1. Deterministic rule parse.
     rule_sq = rule_parse(question)
 
     # 2. Only escalate to the LLM when the rules are uncertain.
     if not _is_uncertain(question, rule_sq):
-        return rule_sq
+        return _maybe_explain(question, rule_sq)
 
     provider = provider or get_provider(config.LLM_PROVIDER)
     outcome = provider.parse(question)
@@ -330,5 +425,6 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
                     llm_sq.area_in = near
                     llm_sq.area_filter = None
             return llm_sq
-    # LLM declined or produced invalid args -> keep the rule result.
-    return rule_sq
+    # LLM declined or produced invalid args -> keep the rule result (with RAG
+    # fallback for conceptual questions).
+    return _maybe_explain(question, rule_sq)

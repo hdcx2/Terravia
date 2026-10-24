@@ -16,9 +16,21 @@ from dataclasses import dataclass
 import pandas as pd
 
 from . import config, query as Q
+from . import knowledge
 from .nlu import (StructuredQuery, RANKING, LOOKUP, ACCESS_GAP,
                   REFUSE_MEDICAL, OUT_OF_SCOPE, COUNTY_PROFILE, LIST_SUPPORTED,
-                  UNSUPPORTED_YEAR)
+                  UNSUPPORTED_YEAR, DATASET_INFO, EXPLAIN, GREETING)
+
+GREETING_REPLY = (
+    "Hi! I'm Terravia. I can show you where health conditions cluster across "
+    "Massachusetts counties, using CDC PLACES data. Try one of these:\n"
+    "- \"Where is diabetes highest?\"\n"
+    "- \"High obesity and low checkup areas\"\n"
+    "- \"Tell me about Hampden\"\n"
+    "I cover diabetes, asthma, high blood pressure, COPD, obesity, mental "
+    "distress, and smoking, plus uninsured rate and routine checkups across "
+    "14 MA counties."
+)
 
 RELEASE_DATA_YEAR = 2023
 MODELED_NOTE = "Values are model-based estimates, not diagnosed case counts."
@@ -126,6 +138,38 @@ def _county_profile(df: pd.DataFrame, county: str) -> Answer:
                   rows=sub.to_dict("records"), source_line=cite)
 
 
+def _dataset_info(df: pd.DataFrame) -> Answer:
+    """Describe the dataset's actual coverage, read from the loaded data."""
+    counties = sorted(df["locationname"].unique())
+    conds = [config.MEASURES[m].label for m in config.CONDITIONS]
+    access = [config.MEASURES[m].label for m in config.ACCESS_MEASURES]
+    year = int(df["data_year"].mode().iloc[0])
+    cite = _citation(year)
+    txt = (
+        f"I cover {len(counties)} Massachusetts counties, data year {year}.\n"
+        f"Counties: {', '.join(counties)}.\n"
+        f"Conditions: {', '.join(conds)}.\n"
+        f"Access measures: {', '.join(access)}.\n\n{cite}"
+    )
+    return Answer(txt, DATASET_INFO, grounded=True, source_line=cite)
+
+
+def _explain(sq: StructuredQuery) -> Answer:
+    """Answer a conceptual question from retrieved project/data snippets only.
+
+    The text is authored content (no statistics), so it's grounded by
+    construction. We append a pointer to where a user can get the numbers."""
+    by_id = {s.id: s for s in knowledge.KB}
+    snippets = [by_id[i] for i in (sq.snippet_ids or []) if i in by_id]
+    if not snippets:
+        return Answer(_scope_reply(), OUT_OF_SCOPE, grounded=True)
+    body = "\n\n".join(s.text for s in snippets)
+    tail = ("\n\nFor the actual numbers, ask about a condition, e.g. "
+            "\"where is diabetes highest?\"")
+    note = f"\n\nBased on Terravia's data and methodology ({config.SOURCE}, 2023)."
+    return Answer(body + tail + note, EXPLAIN, grounded=True)
+
+
 def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
     # Guardrails: no query runs.
     if sq.intent == REFUSE_MEDICAL:
@@ -136,6 +180,12 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
         return Answer(
             f"I only have {config.SOURCE} data for {RELEASE_DATA_YEAR}. "
             "I can't show figures for other years.", sq.intent, grounded=True)
+    if sq.intent == DATASET_INFO:
+        return _dataset_info(df)
+    if sq.intent == EXPLAIN:
+        return _explain(sq)
+    if sq.intent == GREETING:
+        return Answer(GREETING_REPLY, sq.intent, grounded=True)
     if sq.intent == COUNTY_PROFILE and sq.area_filter:
         return _county_profile(df, sq.area_filter)
     if sq.condition is None and sq.intent != ACCESS_GAP:
@@ -157,28 +207,41 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
         return Answer(txt, sq.intent, grounding_check(txt, allowed),
                       rows=gap.rows, source_line=cite)
 
-    # ranking / lookup
-    if sq.intent == LOOKUP and sq.area_filter and not sq.area_in:
-        result = Q.run_lookup(df, sq.condition, sq.area_filter)
-    else:
-        result = Q.run_ranking(df, sq.condition, sort=sq.sort,
-                               limit=sq.limit, area_filter=sq.area_filter,
-                               area_in=sq.area_in)
+    # ranking / lookup. If the user named multiple conditions, answer each.
+    targets = sq.conditions if sq.conditions else [sq.condition]
+    blocks: list[str] = []
+    allowed: list[float] = []
+    all_rows: list = []
+    data_year = config.measure_year(targets[0])
 
-    cite = _citation(result.data_year)
-    if not result.rows:
-        area = f" for \"{sq.area_filter}\"" if sq.area_filter else ""
-        txt = (f"I don't have data{area} for {config.MEASURES[sq.condition].label} "
-               f"in Massachusetts counties.\n\n{cite}")
-        return Answer(txt, sq.intent, grounded=True, rows=[], source_line=cite)
+    for mid in targets:
+        if sq.intent == LOOKUP and sq.area_filter and not sq.area_in:
+            result = Q.run_lookup(df, mid, sq.area_filter)
+        else:
+            result = Q.run_ranking(df, mid, sort=sq.sort, limit=sq.limit,
+                                   area_filter=sq.area_filter, area_in=sq.area_in)
 
-    if sq.intent == LOOKUP and sq.area_filter and len(result.rows) == 1:
-        r = result.rows[0]
-        txt = (f"{r.locationname} County: {result.measure_label} "
-               f"{r.value:.1f}% (95% CI {r.low_ci:.1f} to {r.high_ci:.1f}).\n\n{cite}")
-    else:
-        txt = (_hedged_lead(result) + "\n\nTop results:\n" +
-               _ranking_body(result) + f"\n\n{cite}")
+        label = config.MEASURES[mid].label
+        if not result.rows:
+            area = f" for \"{sq.area_filter}\"" if sq.area_filter else ""
+            blocks.append(f"{label}: I don't have data{area} in Massachusetts counties.")
+            continue
 
-    return Answer(txt, sq.intent, grounding_check(txt, result.values()),
-                  rows=result.rows, source_line=cite)
+        all_rows += result.rows
+        allowed += result.values()
+        if sq.intent == LOOKUP and sq.area_filter and len(result.rows) == 1:
+            r = result.rows[0]
+            blocks.append(f"{r.locationname} County, {label}: {r.value:.1f}% "
+                          f"(95% CI {r.low_ci:.1f} to {r.high_ci:.1f}).")
+        else:
+            lead = _hedged_lead(result)
+            body = _ranking_body(result)
+            # Prefix each block with the condition name when answering several.
+            head = f"{label}:\n" if len(targets) > 1 else ""
+            blocks.append(f"{head}{lead}\n\nTop results:\n{body}")
+
+    cite = _citation(data_year)
+    sep = "\n\n---\n\n" if len(targets) > 1 else "\n\n"
+    txt = sep.join(blocks) + f"\n\n{cite}"
+    return Answer(txt, sq.intent, grounding_check(txt, allowed),
+                  rows=all_rows, source_line=cite)

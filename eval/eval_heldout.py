@@ -27,7 +27,7 @@ os.environ.setdefault("HOTSPOT_LLM_TIMEOUT", "90")
 from src import data_loader, nlu, answer as A           # noqa: E402
 from src.llm import get_provider, provider_health        # noqa: E402
 
-# (question, expected_intent) — my read of the intended behavior.
+# (question, expected_intent): my read of the intended behavior.
 HELDOUT = [
     ("Which county has the fewest adults getting routine checkups?", "ranking"),
     ("Is COPD worse in Berkshire or Franklin?", "ranking"),

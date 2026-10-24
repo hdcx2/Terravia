@@ -1,7 +1,7 @@
 """Central configuration: dataset identity, measure registry, thresholds.
 
 Everything the rest of the app needs to know about *what* data we have lives
-here. No logic — just facts and small helpers over them.
+here. No logic: just facts and small helpers over them.
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ class Measure:
     data_year: int          # per-measure BRFSS year (all 2023 in this slice)
 
 
-# Registry — the 6 measures in scope. Order = display order.
+# Registry: the 6 measures in scope. Order = display order.
 MEASURES: dict[str, Measure] = {
     "DIABETES": Measure("DIABETES", "Diabetes",
                         ("diabetes", "diabetic"), "condition", True, 2023),
@@ -47,6 +47,16 @@ MEASURES: dict[str, Measure] = {
     "COPD": Measure("COPD", "COPD",
                     ("copd", "emphysema", "chronic obstructive"),
                     "condition", True, 2023),
+    "OBESITY": Measure("OBESITY", "Obesity",
+                       ("obesity", "obese", "overweight"),
+                       "condition", True, 2023),
+    "MHLTH": Measure("MHLTH", "Frequent mental distress",
+                     ("mental distress", "mental health", "mental",
+                      "frequent mental", "distress"),
+                     "condition", True, 2023),
+    "CSMOKING": Measure("CSMOKING", "Current smoking",
+                        ("smoking", "smoke", "smoker", "cigarette", "tobacco"),
+                        "condition", True, 2023),
     "ACCESS2": Measure("ACCESS2", "Uninsured (adults 18-64)",
                        ("uninsured", "insurance", "no insurance",
                         "health insurance", "coverage"),

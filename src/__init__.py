@@ -1,1 +1,1 @@
-"""Terravia — Condition Hotspot Finder agent package."""
+"""Terravia: Condition Hotspot Finder agent package."""
