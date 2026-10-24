@@ -36,7 +36,15 @@ CASES = [
     ("What's the weather in Boston?", "out_of_scope"),
     ("Diabetes in Narnia.", "lookup"),          # valid measure, unknown area -> no-data answer
     ("Tell me about diabetes.", "ranking"),     # vague -> default MA ranking
+    ("Highest rates of diabetes and asthma.", "ranking"),  # multi-condition
+    ("Top counties for COPD and high blood pressure.", "ranking"),  # multi-condition
     ("", "out_of_scope"),
+]
+
+# Questions that name multiple conditions -> the answer must address ALL of them.
+MULTI = [
+    ("Highest rates of diabetes and asthma.", ["Diabetes", "Current asthma"]),
+    ("Top counties for COPD and high blood pressure.", ["COPD", "High blood pressure"]),
 ]
 
 
@@ -62,7 +70,19 @@ def main() -> int:
 
     total = len(CASES)
     print(f"\n{passed}/{total} passed")
-    return 0 if passed == total else 1
+
+    # Multi-condition: the answer must mention every named condition's label.
+    multi_pass = 0
+    print("\n-- multi-condition coverage --")
+    for q, labels in MULTI:
+        ans = A.answer(df, nlu.route(q))
+        covered = all(lbl in ans.text for lbl in labels)
+        multi_pass += covered
+        print(f"[{'PASS' if covered else 'FAIL'}] {q[:50]:50} covers {labels}")
+    ok_multi = multi_pass == len(MULTI)
+    print(f"{multi_pass}/{len(MULTI)} multi-condition answers covered all conditions")
+
+    return 0 if (passed == total and ok_multi) else 1
 
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ VALID_INTENTS = {RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE,
 class StructuredQuery:
     intent: str
     condition: str | None = None
+    conditions: list[str] | None = None  # >1 condition named -> answer each
     access_measure: str | None = None
     area_filter: str | None = None
     area_in: list[str] | None = None   # resolved county set for "near X"
@@ -215,10 +216,11 @@ def rule_parse(question: str) -> StructuredQuery:
 
     measures_found = [mid for mid in config.MEASURES
                       if any(a in q.lower() for a in config.MEASURES[mid].aliases)]
-    condition = next((m for m in measures_found
-                      if config.MEASURES[m].kind == "condition"), None)
+    conditions = [m for m in measures_found
+                  if config.MEASURES[m].kind == "condition"]
     access = next((m for m in measures_found
                    if config.MEASURES[m].kind == "access"), None)
+    condition = conditions[0] if conditions else None
 
     # access-gap: a condition AND an access word together
     if condition and access:
@@ -238,7 +240,9 @@ def rule_parse(question: str) -> StructuredQuery:
                                      "lowest", "least", "fewest", "areas",
                                      "counties", "list"))
     intent = LOOKUP if (area and not list_cue and not is_near) else RANKING
-    return StructuredQuery(intent, condition=primary,
+    # If the user named more than one condition, answer each of them.
+    multi = conditions if len(conditions) > 1 else None
+    return StructuredQuery(intent, condition=primary, conditions=multi,
                            area_filter=None if area_in else area,
                            area_in=area_in, sort=sort, parser="rule")
 

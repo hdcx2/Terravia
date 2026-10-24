@@ -175,28 +175,41 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
         return Answer(txt, sq.intent, grounding_check(txt, allowed),
                       rows=gap.rows, source_line=cite)
 
-    # ranking / lookup
-    if sq.intent == LOOKUP and sq.area_filter and not sq.area_in:
-        result = Q.run_lookup(df, sq.condition, sq.area_filter)
-    else:
-        result = Q.run_ranking(df, sq.condition, sort=sq.sort,
-                               limit=sq.limit, area_filter=sq.area_filter,
-                               area_in=sq.area_in)
+    # ranking / lookup. If the user named multiple conditions, answer each.
+    targets = sq.conditions if sq.conditions else [sq.condition]
+    blocks: list[str] = []
+    allowed: list[float] = []
+    all_rows: list = []
+    data_year = config.measure_year(targets[0])
 
-    cite = _citation(result.data_year)
-    if not result.rows:
-        area = f" for \"{sq.area_filter}\"" if sq.area_filter else ""
-        txt = (f"I don't have data{area} for {config.MEASURES[sq.condition].label} "
-               f"in Massachusetts counties.\n\n{cite}")
-        return Answer(txt, sq.intent, grounded=True, rows=[], source_line=cite)
+    for mid in targets:
+        if sq.intent == LOOKUP and sq.area_filter and not sq.area_in:
+            result = Q.run_lookup(df, mid, sq.area_filter)
+        else:
+            result = Q.run_ranking(df, mid, sort=sq.sort, limit=sq.limit,
+                                   area_filter=sq.area_filter, area_in=sq.area_in)
 
-    if sq.intent == LOOKUP and sq.area_filter and len(result.rows) == 1:
-        r = result.rows[0]
-        txt = (f"{r.locationname} County: {result.measure_label} "
-               f"{r.value:.1f}% (95% CI {r.low_ci:.1f} to {r.high_ci:.1f}).\n\n{cite}")
-    else:
-        txt = (_hedged_lead(result) + "\n\nTop results:\n" +
-               _ranking_body(result) + f"\n\n{cite}")
+        label = config.MEASURES[mid].label
+        if not result.rows:
+            area = f" for \"{sq.area_filter}\"" if sq.area_filter else ""
+            blocks.append(f"{label}: I don't have data{area} in Massachusetts counties.")
+            continue
 
-    return Answer(txt, sq.intent, grounding_check(txt, result.values()),
-                  rows=result.rows, source_line=cite)
+        all_rows += result.rows
+        allowed += result.values()
+        if sq.intent == LOOKUP and sq.area_filter and len(result.rows) == 1:
+            r = result.rows[0]
+            blocks.append(f"{r.locationname} County — {label}: {r.value:.1f}% "
+                          f"(95% CI {r.low_ci:.1f} to {r.high_ci:.1f}).")
+        else:
+            lead = _hedged_lead(result)
+            body = _ranking_body(result)
+            # Prefix each block with the condition name when answering several.
+            head = f"{label}:\n" if len(targets) > 1 else ""
+            blocks.append(f"{head}{lead}\n\nTop results:\n{body}")
+
+    cite = _citation(data_year)
+    sep = "\n\n———\n\n" if len(targets) > 1 else "\n\n"
+    txt = sep.join(blocks) + f"\n\n{cite}"
+    return Answer(txt, sq.intent, grounding_check(txt, allowed),
+                  rows=all_rows, source_line=cite)
