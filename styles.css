@@ -952,7 +952,8 @@ body {
   margin-top: 16px;
 }
 .map-legend-bar {
-  flex: 1;
+  display: block;
+  flex: 1 1 auto;
   max-width: 260px;
   height: 10px;
   border-radius: 6px;
