@@ -350,9 +350,26 @@ body {
 
 .chat-messages {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-height: 130px;
-  align-items: flex-end;
-  padding: 22px 0 16px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 22px 2px 16px;
+}
+
+.chat-source {
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1px solid #edf0eb;
+  color: #929d95;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.chat-message.is-pending {
+  opacity: 0.6;
+  font-style: italic;
 }
 
 .chat-message {

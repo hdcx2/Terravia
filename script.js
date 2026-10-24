@@ -38,15 +38,34 @@ if (chatForm) {
   const sendBtn = chatForm.querySelector('button');
   const messages = document.querySelector('.chat-messages');
 
+  const scrollToEnd = () => { messages.scrollTop = messages.scrollHeight; };
+
   const addMessage = (text, who) => {
     const el = document.createElement('p');
     el.className = `chat-message ${who === 'user' ? 'user-message' : 'bot-message'}`;
-    // Preserve the answer's line breaks (CI lists, profiles).
     el.textContent = text;
-    el.style.whiteSpace = 'pre-wrap';
+    el.style.whiteSpace = 'pre-wrap';   // preserve line breaks (CI lists, profiles)
     messages.append(el);
-    messages.scrollTop = messages.scrollHeight;
+    scrollToEnd();
     return el;
+  };
+
+  // Split the API answer into the body and its "Source:" citation so the
+  // citation renders as a small muted footnote rather than part of the blob.
+  const renderBotAnswer = (el, answer) => {
+    const idx = answer.indexOf('Source:');
+    const body = idx >= 0 ? answer.slice(0, idx).trim() : answer.trim();
+    const source = idx >= 0 ? answer.slice(idx).trim() : '';
+    el.classList.remove('is-pending');
+    el.textContent = body;
+    el.style.whiteSpace = 'pre-wrap';
+    if (source) {
+      const cite = document.createElement('span');
+      cite.className = 'chat-source';
+      cite.textContent = source;
+      el.append(document.createElement('br'), cite);
+    }
+    scrollToEnd();
   };
 
   chatForm.addEventListener('submit', async (event) => {
@@ -60,6 +79,7 @@ if (chatForm) {
     sendBtn.disabled = true;
 
     const pending = addMessage('Thinking…', 'bot');
+    pending.classList.add('is-pending');
     try {
       const res = await fetch(`${TERRAVIA_API}/chat`, {
         method: 'POST',
@@ -68,15 +88,16 @@ if (chatForm) {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      pending.textContent = data.answer;
+      renderBotAnswer(pending, data.answer);
     } catch (err) {
+      pending.classList.remove('is-pending');
       pending.textContent =
         'Sorry, the health data assistant is unavailable right now. Please try again shortly.';
     } finally {
       input.disabled = false;
       sendBtn.disabled = false;
       input.focus();
-      messages.scrollTop = messages.scrollHeight;
+      scrollToEnd();
     }
   });
 }
