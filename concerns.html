@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Terravia's ethical and technical considerations for community health data."
+    >
+    <title>Concerns | Terravia</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+
+  <body>
+    <div class="site-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav-links"
+          aria-label="Expand navigation"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <a class="side-brand" href="index.html"><img src="images/logo_name.png" alt="Terravia"></a>
+
+        <nav class="nav-links" id="nav-links">
+          <a href="index.html">
+            <span class="nav-icon">⌂</span>
+            <span class="nav-label">Home</span>
+          </a>
+          <a href="about.html">
+            <span class="nav-icon">i</span>
+            <span class="nav-label">About Us</span>
+          </a>
+          <a href="concerns.html" aria-current="page">
+            <span class="nav-icon">◎</span>
+            <span class="nav-label">Concerns</span>
+          </a>
+          <a href="team.html">
+            <span class="nav-icon">↗</span>
+            <span class="nav-label">Our Team</span>
+          </a>
+        </nav>
+
+        <p class="sidebar-note">
+          Health information,<br>
+          closer to home.
+        </p>
+      </aside>
+
+      <main class="main-content">
+        <header class="page-heading">
+          <p class="eyebrow">Thoughtful by design</p>
+          <div class="heading-row">
+            <img class="heading-logo" src="images/Terravia.png" alt="Terravia compass logo">
+            <div class="heading-text">
+              <img class="heading-name" src="images/logo_name.png" alt="Terravia">
+              <p class="page-subtitle">Mapping health. Driving impact.</p>
+            </div>
+          </div>
+        </header>
+
+        <section class="concerns-intro">
+          <p>
+            Health data is only useful when it is handled responsibly. Two concerns guide
+            every decision we make as Terravia develops: the ethics of representing
+            communities, and the technical rigor behind the data itself.
+          </p>
+          <nav class="section-tabs" aria-label="Concerns sections">
+            <a href="#ethical">Ethical</a>
+            <a href="#technical">Technical</a>
+          </nav>
+        </section>
+
+        <div class="concern-grid">
+          <article class="concern-card ethical-card" id="ethical">
+            <span class="card-index">01 / ETHICAL</span>
+            <h2>People and place</h2>
+            <p>
+              Health data should deepen understanding of a community, never stigmatize it.
+              We present findings with their uncertainty intact, resist the suggestion that
+              location alone determines health, and weigh how each visualization could
+              affect the people it represents.
+            </p>
+            <ul>
+              <li>Safeguard privacy and never expose individuals.</li>
+              <li>State the limits and uncertainty behind every figure.</li>
+              <li>Describe communities with accuracy and respect.</li>
+            </ul>
+          </article>
+
+          <article class="concern-card technical-card" id="technical">
+            <span class="card-index">02 / TECHNICAL</span>
+            <h2>Data and method</h2>
+            <p>
+              Sources differ in quality, geographic scale, and how recently they were
+              collected. Combining them demands deliberate methodological choices and clear
+              documentation, so that every map and summary can be read for exactly what it
+              represents.
+            </p>
+            <ul>
+              <li>Document sources, collection dates, and definitions.</li>
+              <li>Reconcile differences in geographic scale.</li>
+              <li>Build for accessibility and sustained updates.</li>
+            </ul>
+          </article>
+        </div>
+
+        <footer class="site-footer">
+          <span>Terravia</span>
+          <span>Clearer information. Stronger communities.</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

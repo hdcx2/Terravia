@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Terravia connects Massachusetts communities with clear information about health conditions and local resources."
+    >
+    <title>Terravia | Home</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+
+  <body>
+    <div class="site-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Expand navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <a class="side-brand" href="index.html"><img src="images/logo_name.png" alt="Terravia"></a>
+
+        <nav class="nav-links" id="nav-links">
+          <a href="index.html" aria-current="page">
+            <span class="nav-icon">⌂</span>
+            <span class="nav-label">Home</span>
+          </a>
+          <a href="about.html">
+            <span class="nav-icon">i</span>
+            <span class="nav-label">About Us</span>
+          </a>
+          <a href="concerns.html">
+            <span class="nav-icon">◎</span>
+            <span class="nav-label">Concerns</span>
+          </a>
+          <a href="team.html">
+            <span class="nav-icon">↗</span>
+            <span class="nav-label">Our Team</span>
+          </a>
+        </nav>
+
+        <p class="sidebar-note">
+          Health information,<br>
+          closer to home.
+        </p>
+      </aside>
+
+      <main class="main-content">
+        <header class="page-heading">
+          <p class="eyebrow">Community health, made clearer</p>
+          <div class="heading-row">
+            <img class="heading-logo" src="images/Terravia.png" alt="Terravia compass logo">
+            <div class="heading-text">
+              <img class="heading-name" src="images/logo_name.png" alt="Terravia">
+              <p class="page-subtitle">Mapping health. Driving impact.</p>
+            </div>
+          </div>
+        </header>
+
+        <section class="home-hero">
+          <div class="hero-copy">
+            <p class="eyebrow">Find a clearer path</p>
+            <h2>Health information for the places we call home.</h2>
+            <p>
+              Terravia maps chronic disease patterns across Massachusetts and puts the
+              underlying data in plain terms, so communities and the people who serve
+              them can see where the need is greatest.
+            </p>
+            <a class="button-link" href="about.html">
+              Discover Terravia <span aria-hidden="true">→</span>
+            </a>
+          </div>
+
+          <div class="chat-card" aria-labelledby="chat-title">
+            <div class="chat-card-heading">
+              <span class="chat-status" aria-hidden="true"></span>
+              <div>
+                <h2 id="chat-title">Ask Terravia</h2>
+                <p>A simple guide to this site</p>
+              </div>
+            </div>
+
+            <div class="chat-messages" aria-live="polite">
+              <p class="chat-message bot-message">
+                Welcome to Terravia. Ask where to find information about the project, the
+                health concerns we track, or the team behind it.
+              </p>
+            </div>
+
+            <form class="chat-form">
+              <label class="visually-hidden" for="chat-input">Your message</label>
+              <input id="chat-input" name="message" placeholder="Type a question…" autocomplete="off" required>
+              <button type="submit" aria-label="Send message">
+                Send <span aria-hidden="true">↑</span>
+              </button>
+            </form>
+
+            <p class="chat-disclaimer">A site guide only. This is not medical advice.</p>
+          </div>
+        </section>
+
+        <footer class="site-footer">
+          <span>Terravia</span>
+          <span>Clearer information. Stronger communities.</span>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>
