@@ -10,7 +10,7 @@ Scope rules that keep this safe:
   - Numbers in answers still come from the structured query path, never from an
     LLM. These snippets carry only facts we authored (definitions, scope, years).
 
-Retrieval is deterministic keyword overlap (no vector DB) — small corpus, works
+Retrieval is deterministic keyword overlap (no vector DB): small corpus, works
 offline, easy to reason about.
 """
 from __future__ import annotations
@@ -73,7 +73,7 @@ KB: list[Snippet] = [
               "access is weak at the same time: in the top third of counties "
               "for the condition, and either the top third for uninsured rate "
               "or the bottom third for routine checkups. It points to places "
-              "where need is high but care is thin — the strongest case for "
+              "where need is high but care is thin, the strongest case for "
               "targeted outreach."),
     ),
     Snippet(
@@ -94,7 +94,7 @@ KB: list[Snippet] = [
         keywords=("town", "town level", "city", "zip", "tract", "census",
                   "granular", "nationwide", "other states", "level",
                   "geographic", "smaller area"),
-        text=("Coverage is Massachusetts at the county level only — 14 counties. "
+        text=("Coverage is Massachusetts at the county level only, 14 counties. "
               "PLACES also publishes town, census-tract, and ZIP-code data and "
               "other states, but this app is scoped to MA counties to stay "
               "focused and fast."),

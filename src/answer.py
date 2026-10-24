@@ -218,7 +218,7 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
         allowed += result.values()
         if sq.intent == LOOKUP and sq.area_filter and len(result.rows) == 1:
             r = result.rows[0]
-            blocks.append(f"{r.locationname} County — {label}: {r.value:.1f}% "
+            blocks.append(f"{r.locationname} County, {label}: {r.value:.1f}% "
                           f"(95% CI {r.low_ci:.1f} to {r.high_ci:.1f}).")
         else:
             lead = _hedged_lead(result)
@@ -228,7 +228,7 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
             blocks.append(f"{head}{lead}\n\nTop results:\n{body}")
 
     cite = _citation(data_year)
-    sep = "\n\n———\n\n" if len(targets) > 1 else "\n\n"
+    sep = "\n\n---\n\n" if len(targets) > 1 else "\n\n"
     txt = sep.join(blocks) + f"\n\n{cite}"
     return Answer(txt, sq.intent, grounding_check(txt, allowed),
                   rows=all_rows, source_line=cite)

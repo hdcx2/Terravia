@@ -1,7 +1,7 @@
 """The query engine: the ONLY place numbers come from.
 
 Everything the chatbot, table, map, and access-gap view show is produced here
-by filtering the loaded DataFrame. The LLM never emits a value — it only chooses
+by filtering the loaded DataFrame. The LLM never emits a value: it only chooses
 the query. That is what makes answers grounded (R5.2).
 """
 from __future__ import annotations
@@ -76,7 +76,7 @@ def run_ranking(df: pd.DataFrame, measureid: str, *, sort: str = "desc",
             data_year=config.measure_year(measureid),
         ))
 
-    # CI-overlap flag: top vs the next row (findings #3 — rankings aren't distinct).
+    # CI-overlap flag: top vs the next row (findings #3: rankings aren't distinct).
     for i in range(len(rows) - 1):
         a, b = rows[i], rows[i + 1]
         rows[i].ci_overlaps_next = a.low_ci <= b.high_ci and b.low_ci <= a.high_ci
@@ -88,7 +88,7 @@ def run_ranking(df: pd.DataFrame, measureid: str, *, sort: str = "desc",
 
 
 def run_lookup(df: pd.DataFrame, measureid: str, area_filter: str) -> QueryResult:
-    """Value(s) for a named area — a ranking filtered to that area, no limit cut."""
+    """Value(s) for a named area: a ranking filtered to that area, no limit cut."""
     return run_ranking(df, measureid, sort="desc", limit=50, area_filter=area_filter)
 
 

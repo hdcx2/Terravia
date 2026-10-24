@@ -1,7 +1,6 @@
 """Example hosted provider (OpenAI tool-calling).
 
-Shown as the swap target. It only ever returns the query tool's arguments —
-never an answer, never a number. If the SDK or key is missing, construction
+Shown as the swap target. It only ever returns the query tool's arguments: never an answer, never a number. If the SDK or key is missing, construction
 raises and the factory falls back to NullProvider.
 
 This file is a scaffold: wire real SDK calls where marked. Keep the contract

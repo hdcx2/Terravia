@@ -62,7 +62,7 @@ _MEDICAL_PATTERNS = [
     r"\bi('?m| am) (worried|concerned|afraid)\b",
 ]
 # Clinical/educational questions about the NATURE of a disease (causes,
-# symptoms, prevention, transmission) — not where it's common. We don't answer
+# symptoms, prevention, transmission): not where it's common. We don't answer
 # these from county data; redirect to what we DO offer.
 _CLINICAL_INFO_PATTERNS = [
     r"\bwhat causes?\b", r"\bwhat('?s| is) the cause\b", r"\bwhy do (people|you)\b",
@@ -167,7 +167,7 @@ def _names_unsupported_topic(text: str) -> bool:
 
 
 def _asks_clinical_info(text: str) -> bool:
-    """True for 'what causes/symptoms/how to prevent X' — clinical/educational
+    """True for 'what causes/symptoms/how to prevent X': clinical/educational
     questions about a disease's nature that we don't answer from county data."""
     t = text.lower()
     return any(re.search(p, t) for p in _CLINICAL_INFO_PATTERNS)
@@ -230,7 +230,7 @@ def _maybe_explain(question: str, sq: StructuredQuery) -> StructuredQuery:
     """If the structured path gave up (out_of_scope), try RAG over our own
     knowledge base. If relevant snippets exist, answer conceptually (EXPLAIN)
     instead of the generic capability message. Statistics are never produced
-    here — only authored project/data facts."""
+    here: only authored project/data facts."""
     if sq.intent != OUT_OF_SCOPE:
         return sq
     hits = knowledge.retrieve(question)

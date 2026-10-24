@@ -14,12 +14,12 @@ with the source, data year, and a model-based-estimate caveat on every result.
 
 - **Geography:** 14 Massachusetts counties (CDC PLACES County, 2025 release, 2023 data)
 - **Conditions:** diabetes, asthma, high blood pressure, COPD
-- **Access measures:** uninsured (adults 18–64), routine checkup
+- **Access measures:** uninsured (adults 18 to 64), routine checkup
 - **Access gap:** flags counties where burden is high *and* access is thin
 
 ## Data source (exactly where the numbers come from)
 
-- **Provider:** CDC PLACES — *Local Data for Better Health*.
+- **Provider:** CDC PLACES: *Local Data for Better Health*.
 - **Dataset:** PLACES **County** Data, **2025 release**, Socrata id **`swc5-untb`**.
 - **Portal page:** https://data.cdc.gov/d/swc5-untb
 - **API endpoint:** https://data.cdc.gov/resource/swc5-untb.json
@@ -35,7 +35,7 @@ The full `swc5-untb` dataset for Massachusetts has **40 measures × 14 counties 
 diabetes, asthma, high blood pressure, COPD, uninsured, routine checkup) so the
 tool stays focused on chronic-condition burden + access. The other 34 measures
 live in the same dataset and can be added by editing the measure list in
-`src/config.py` — no new source required.
+`src/config.py`: no new source required.
 
 ### Reproduce the pull
 
@@ -51,11 +51,11 @@ curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=
 
 | File | Contents | Rows |
 |---|---|---|
-| `snapshot_places_ma.csv` | the 6-measure clinical set — **what the app loads** | 84 |
+| `snapshot_places_ma.csv` | the 6-measure clinical set: **what the app loads** | 84 |
 | `places_ma_full.csv` | all 40 PLACES measures for MA (the complete menu) | 560 |
 | `places_ma_behavioral.csv` | alt set: smoking, mental distress, obesity, diabetes, checkup | 70 |
 | `ma_counties.geojson` | county boundary shapes for the map | 14 |
-| `snapshot_meta.json` | provenance record (dataset id, URL, years, measures) |  — |
+| `snapshot_meta.json` | provenance record (dataset id, URL, years, measures) |: |
 
 The app loads `snapshot_places_ma.csv` by default so it works offline. Set
 `prefer_live=True` (in `data_loader.load`) to pull fresh from the Socrata API
@@ -63,15 +63,15 @@ instead.
 
 ## Architecture
 
-- `src/` — the agent: a rule-first router (`nlu.py`) with guardrails, a grounded
+- `src/`: the agent. A rule-first router (`nlu.py`) with guardrails, a grounded
   answer builder (`answer.py`), a query engine over the data (`query.py`), and
   swappable LLM providers (`llm/`: null / OpenAI / Ollama).
-- `api.py` — FastAPI backend exposing `POST /chat` and `GET /health`.
-- `index.html`, `script.js`, `styles.css`, `images/` — the static website; the
+- `api.py`: FastAPI backend exposing `POST /chat` and `GET /health`.
+- `index.html`, `script.js`, `styles.css`, `images/`: the static website; the
   home page chat card calls the API (endpoint set in `config.js`).
-- `data/` — offline CDC PLACES snapshot + county GeoJSON, so the agent runs
+- `data/`: offline CDC PLACES snapshot + county GeoJSON, so the agent runs
   without network access.
-- `eval/` — regression suites (questions, guardrails, LLM router).
+- `eval/`: regression suites (questions, guardrails, LLM router).
 
 ## Run locally
 
