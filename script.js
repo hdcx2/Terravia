@@ -114,16 +114,24 @@ if (chatForm) {
  * Interactive choropleth map (D3, SVG only — no tiles, no API key, no watermark)
  * Draws MA county polygons from the API and colors them by a chosen condition.
  * ------------------------------------------------------------------------- */
-const mapSvgEl = document.getElementById('map-svg');
-if (mapSvgEl && window.d3) {
+function initTerraviaMap() {
+  const mapSvgEl = document.getElementById('map-svg');
+  if (!mapSvgEl) return;
+  const caption = document.getElementById('map-caption');
+  if (typeof window.d3 === 'undefined') {
+    if (caption) caption.textContent = 'Map library failed to load.';
+    return;
+  }
   const svg = d3.select('#map-svg');
   const tooltip = document.getElementById('map-tooltip');
   const legend = document.getElementById('map-legend');
-  const caption = document.getElementById('map-caption');
   const selectEl = document.getElementById('map-measure');
 
   const W = 680, H = 420;
-  svg.attr('viewBox', `0 0 ${W} ${H}`).attr('preserveAspectRatio', 'xMidYMid meet');
+  svg.attr('viewBox', `0 0 ${W} ${H}`)
+     .attr('preserveAspectRatio', 'xMidYMid meet')
+     .style('width', '100%')
+     .style('height', 'auto');
 
   let geo = null;
 
@@ -184,15 +192,23 @@ if (mapSvgEl && window.d3) {
       caption.textContent =
         `${data.label} — ${data.source}, ${data.data_year}. Shades run county low to high; values are model-based estimates.`;
     } catch (err) {
-      caption.textContent = 'Map data is unavailable right now.';
+      caption.textContent = `Map data error: ${err.message}`;
+      console.error('Terravia map render error:', err);
     }
   };
 
   const init = async () => {
+    caption.textContent = 'Loading map…';
     try {
       const [gj, ms] = await Promise.all([
-        fetch(`${TERRAVIA_API}/geojson`).then((r) => r.json()),
-        fetch(`${TERRAVIA_API}/measures`).then((r) => r.json()),
+        fetch(`${TERRAVIA_API}/geojson`).then((r) => {
+          if (!r.ok) throw new Error(`geojson HTTP ${r.status}`);
+          return r.json();
+        }),
+        fetch(`${TERRAVIA_API}/measures`).then((r) => {
+          if (!r.ok) throw new Error(`measures HTTP ${r.status}`);
+          return r.json();
+        }),
       ]);
       geo = gj;
       selectEl.innerHTML = ms.measures
@@ -201,9 +217,17 @@ if (mapSvgEl && window.d3) {
       selectEl.addEventListener('change', () => render(selectEl.value));
       await render(ms.measures[0].id);
     } catch (err) {
-      caption.textContent = 'Map is unavailable right now.';
+      caption.textContent = `Map unavailable: ${err.message}`;
+      console.error('Terravia map init error:', err);
     }
   };
 
   init();
+}
+
+// Run after everything (including the deferred D3) has loaded.
+if (document.readyState === 'complete') {
+  initTerraviaMap();
+} else {
+  window.addEventListener('load', initTerraviaMap);
 }
