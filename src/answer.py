@@ -16,9 +16,10 @@ from dataclasses import dataclass
 import pandas as pd
 
 from . import config, query as Q
+from . import knowledge
 from .nlu import (StructuredQuery, RANKING, LOOKUP, ACCESS_GAP,
                   REFUSE_MEDICAL, OUT_OF_SCOPE, COUNTY_PROFILE, LIST_SUPPORTED,
-                  UNSUPPORTED_YEAR, DATASET_INFO)
+                  UNSUPPORTED_YEAR, DATASET_INFO, EXPLAIN)
 
 RELEASE_DATA_YEAR = 2023
 MODELED_NOTE = "Values are model-based estimates, not diagnosed case counts."
@@ -142,6 +143,22 @@ def _dataset_info(df: pd.DataFrame) -> Answer:
     return Answer(txt, DATASET_INFO, grounded=True, source_line=cite)
 
 
+def _explain(sq: StructuredQuery) -> Answer:
+    """Answer a conceptual question from retrieved project/data snippets only.
+
+    The text is authored content (no statistics), so it's grounded by
+    construction. We append a pointer to where a user can get the numbers."""
+    by_id = {s.id: s for s in knowledge.KB}
+    snippets = [by_id[i] for i in (sq.snippet_ids or []) if i in by_id]
+    if not snippets:
+        return Answer(_scope_reply(), OUT_OF_SCOPE, grounded=True)
+    body = "\n\n".join(s.text for s in snippets)
+    tail = ("\n\nFor the actual numbers, ask about a condition, e.g. "
+            "\"where is diabetes highest?\"")
+    note = f"\n\nBased on Terravia's data and methodology ({config.SOURCE}, 2023)."
+    return Answer(body + tail + note, EXPLAIN, grounded=True)
+
+
 def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
     # Guardrails: no query runs.
     if sq.intent == REFUSE_MEDICAL:
@@ -154,6 +171,8 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
             "I can't show figures for other years.", sq.intent, grounded=True)
     if sq.intent == DATASET_INFO:
         return _dataset_info(df)
+    if sq.intent == EXPLAIN:
+        return _explain(sq)
     if sq.intent == COUNTY_PROFILE and sq.area_filter:
         return _county_profile(df, sq.area_filter)
     if sq.condition is None and sq.intent != ACCESS_GAP:

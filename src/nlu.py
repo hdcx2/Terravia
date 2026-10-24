@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from . import config, geo
+from . import config, geo, knowledge
 from .llm import LLMProvider, get_provider
 
 # Intents
@@ -27,8 +27,10 @@ COUNTY_PROFILE = "county_profile"   # a county named with no measure -> all six
 LIST_SUPPORTED = "list_supported"   # unsupported condition -> show capabilities
 UNSUPPORTED_YEAR = "unsupported_year"  # a year other than the data year
 DATASET_INFO = "dataset_info"       # questions ABOUT the data (counties, years, coverage)
+EXPLAIN = "explain"                 # conceptual question -> RAG over our own docs
 VALID_INTENTS = {RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE,
-                 COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR, DATASET_INFO}
+                 COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR, DATASET_INFO,
+                 EXPLAIN}
 
 
 @dataclass
@@ -39,6 +41,7 @@ class StructuredQuery:
     access_measure: str | None = None
     area_filter: str | None = None
     area_in: list[str] | None = None   # resolved county set for "near X"
+    snippet_ids: list[str] | None = None  # retrieved KB snippets for EXPLAIN
     sort: str = "desc"
     limit: int = 10
     parser: str = "rule"          # "guardrail" | "rule" | "llm" (the path taken)
@@ -57,6 +60,17 @@ _MEDICAL_PATTERNS = [
     r"\b(at|my) risk\b", r"\bam i at risk\b", r"\bchances? of (getting|having)\b",
     r"\bshould i be worried\b", r"\bworried (that|i|about my)\b",
     r"\bi('?m| am) (worried|concerned|afraid)\b",
+]
+# Clinical/educational questions about the NATURE of a disease (causes,
+# symptoms, prevention, transmission) — not where it's common. We don't answer
+# these from county data; redirect to what we DO offer.
+_CLINICAL_INFO_PATTERNS = [
+    r"\bwhat causes?\b", r"\bwhat('?s| is) the cause\b", r"\bwhy do (people|you)\b",
+    r"\bhow (do|can) (you|i|people|someone) (prevent|avoid|get|catch|develop|cure|treat)\b",
+    r"\bhow to (prevent|avoid|treat|cure|manage)\b",
+    r"\bis\b.*\b(genetic|hereditary|contagious|curable|preventable|dangerous)\b",
+    r"\bsymptoms? of\b", r"\bsigns? of\b", r"\bwhat (is|are)\b.*\b(symptoms?|causes?)\b",
+    r"\bhow (serious|bad|deadly) is\b",
 ]
 # A specific person (first or third person). NOT "patients"/"people"/"adults"
 # in aggregate, which are population phrasings used in legitimate queries.
@@ -152,6 +166,13 @@ def _names_unsupported_topic(text: str) -> bool:
     return any(re.search(p, t) for p in _UNSUPPORTED_TOPICS)
 
 
+def _asks_clinical_info(text: str) -> bool:
+    """True for 'what causes/symptoms/how to prevent X' — clinical/educational
+    questions about a disease's nature that we don't answer from county data."""
+    t = text.lower()
+    return any(re.search(p, t) for p in _CLINICAL_INFO_PATTERNS)
+
+
 def _names_unsupported_year(text: str) -> int | None:
     """Return a 4-digit year mentioned that is NOT our data year, else None."""
     for m in re.finditer(r"\b(19|20)\d{2}\b", text):
@@ -203,6 +224,20 @@ def _is_uncertain(question: str, sq: StructuredQuery) -> bool:
         return True
     ql = question.lower()
     return any(re.search(c, ql) for c in _UNCERTAIN_CUES)
+
+
+def _maybe_explain(question: str, sq: StructuredQuery) -> StructuredQuery:
+    """If the structured path gave up (out_of_scope), try RAG over our own
+    knowledge base. If relevant snippets exist, answer conceptually (EXPLAIN)
+    instead of the generic capability message. Statistics are never produced
+    here — only authored project/data facts."""
+    if sq.intent != OUT_OF_SCOPE:
+        return sq
+    hits = knowledge.retrieve(question)
+    if hits:
+        return StructuredQuery(EXPLAIN, snippet_ids=[h.id for h in hits],
+                               parser=sq.parser if sq.parser != "rule" else "rule")
+    return sq
 
 
 # --- Stage 2: rule-based parser -------------------------------------------
@@ -318,6 +353,10 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
     # before any parsing, so we never show a ranking for an unnamed measure.
     if _names_unsupported_topic(question):
         return StructuredQuery(LIST_SUPPORTED, parser="guardrail")
+    # Clinical/educational "what causes / symptoms / how to prevent X" -> we
+    # don't answer disease-nature questions from county data; redirect.
+    if _asks_clinical_info(question):
+        return StructuredQuery(LIST_SUPPORTED, parser="guardrail")
     # A year other than the data year -> say we only have 2023, before the LLM.
     if _names_unsupported_year(question) is not None:
         return StructuredQuery(UNSUPPORTED_YEAR, parser="guardrail")
@@ -335,7 +374,7 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
 
     # 2. Only escalate to the LLM when the rules are uncertain.
     if not _is_uncertain(question, rule_sq):
-        return rule_sq
+        return _maybe_explain(question, rule_sq)
 
     provider = provider or get_provider(config.LLM_PROVIDER)
     outcome = provider.parse(question)
@@ -365,5 +404,6 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
                     llm_sq.area_in = near
                     llm_sq.area_filter = None
             return llm_sq
-    # LLM declined or produced invalid args -> keep the rule result.
-    return rule_sq
+    # LLM declined or produced invalid args -> keep the rule result (with RAG
+    # fallback for conceptual questions).
+    return _maybe_explain(question, rule_sq)

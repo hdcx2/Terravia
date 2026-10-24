@@ -62,6 +62,17 @@ CASES = [
     ("How many counties are in the dataset?", "dataset_info"),
     ("Where does the data come from?", "dataset_info"),
 
+    # 6. Conceptual questions -> EXPLAIN (answered from our own docs via RAG).
+    ("What does the access gap mean?", "explain"),
+    ("How recent is the data?", "explain"),
+    ("Can you do town-level data?", "explain"),
+    ("Why are these estimates and not exact counts?", "explain"),
+
+    # 7. Clinical/educational disease-nature questions -> redirect, NOT a ranking.
+    ("What causes diabetes?", "list_supported"),
+    ("How do you prevent COPD?", "list_supported"),
+    ("Is asthma genetic?", "list_supported"),
+
     # Controls: legitimate planning/research questions must STILL work.
     ("I'm planning a diabetes screening event around Springfield. Where should I look?", "ranking"),
     ("Where should we recruit patients for a hypertension trial?", "ranking"),
