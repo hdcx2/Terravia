@@ -56,6 +56,12 @@ CASES = [
     ("Which county should a cardiology trial avoid?", "list_supported"),
     ("Where are cardiac issues most common?", "list_supported"),
 
+    # 5. Dataset-info questions -> answered from real coverage (not generic).
+    ("What counties are included in the data?", "dataset_info"),
+    ("Which conditions do you cover?", "dataset_info"),
+    ("How many counties are in the dataset?", "dataset_info"),
+    ("Where does the data come from?", "dataset_info"),
+
     # Controls: legitimate planning/research questions must STILL work.
     ("I'm planning a diabetes screening event around Springfield. Where should I look?", "ranking"),
     ("Where should we recruit patients for a hypertension trial?", "ranking"),

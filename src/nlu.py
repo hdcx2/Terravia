@@ -26,8 +26,9 @@ RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE = (
 COUNTY_PROFILE = "county_profile"   # a county named with no measure -> all six
 LIST_SUPPORTED = "list_supported"   # unsupported condition -> show capabilities
 UNSUPPORTED_YEAR = "unsupported_year"  # a year other than the data year
+DATASET_INFO = "dataset_info"       # questions ABOUT the data (counties, years, coverage)
 VALID_INTENTS = {RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE,
-                 COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR}
+                 COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR, DATASET_INFO}
 
 
 @dataclass
@@ -159,6 +160,31 @@ def _names_unsupported_year(text: str) -> int | None:
     return None
 
 
+# Questions ABOUT the dataset itself (its coverage), not about a measure's value.
+# "what/which counties", "what conditions/measures", "what years", "how many
+# counties", "what data do you have", "where does the data come from", "coverage".
+_DATASET_INFO_PATTERNS = [
+    r"\bwhat (counties|conditions|measures|diseases|data|years?|sources?)\b",
+    r"\bwhich (counties|conditions|measures|diseases)\b",
+    r"\bhow many (counties|conditions|measures)\b",
+    r"\bwhat (can|do) you (cover|answer|know|have|support)\b",
+    r"\bwhat('?s| is) (covered|included|in the data|the data)\b",
+    r"\bwhere (does|is) (the|your) data (come from|from)\b",
+    r"\b(list|show)( me)? (the )?(counties|conditions|measures)\b",
+    r"\byour (coverage|data|dataset|sources?)\b",
+    r"\bdata (source|sources|coverage|year)\b",
+]
+
+
+def _is_dataset_info(text: str) -> bool:
+    """True if the question asks about the dataset's coverage, and does NOT name
+    a specific measure (a measure means they want values, not metadata)."""
+    if _match_measure(text) is not None:
+        return False
+    t = text.lower()
+    return any(re.search(p, t) for p in _DATASET_INFO_PATTERNS)
+
+
 def _bare_county(text: str) -> str | None:
     """A county named with NO measure -> county profile. Returns the county."""
     if _match_measure(text) is not None:
@@ -226,7 +252,8 @@ def validate(args: dict) -> StructuredQuery | None:
     if intent not in VALID_INTENTS:
         return None
 
-    if intent in (REFUSE_MEDICAL, OUT_OF_SCOPE, LIST_SUPPORTED):
+    if intent in (REFUSE_MEDICAL, OUT_OF_SCOPE, LIST_SUPPORTED, DATASET_INFO,
+                  UNSUPPORTED_YEAR):
         return StructuredQuery(intent, parser="llm")
 
     if intent == COUNTY_PROFILE:
@@ -294,6 +321,10 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
     bare = _bare_county(question)
     if bare is not None:
         return StructuredQuery(COUNTY_PROFILE, area_filter=bare, parser="guardrail")
+    # Questions about the dataset itself (which counties, years, coverage) ->
+    # answer from the real data rather than the generic capability message.
+    if _is_dataset_info(question):
+        return StructuredQuery(DATASET_INFO, parser="guardrail")
 
     # 1. Deterministic rule parse.
     rule_sq = rule_parse(question)

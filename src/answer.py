@@ -18,7 +18,7 @@ import pandas as pd
 from . import config, query as Q
 from .nlu import (StructuredQuery, RANKING, LOOKUP, ACCESS_GAP,
                   REFUSE_MEDICAL, OUT_OF_SCOPE, COUNTY_PROFILE, LIST_SUPPORTED,
-                  UNSUPPORTED_YEAR)
+                  UNSUPPORTED_YEAR, DATASET_INFO)
 
 RELEASE_DATA_YEAR = 2023
 MODELED_NOTE = "Values are model-based estimates, not diagnosed case counts."
@@ -126,6 +126,22 @@ def _county_profile(df: pd.DataFrame, county: str) -> Answer:
                   rows=sub.to_dict("records"), source_line=cite)
 
 
+def _dataset_info(df: pd.DataFrame) -> Answer:
+    """Describe the dataset's actual coverage, read from the loaded data."""
+    counties = sorted(df["locationname"].unique())
+    conds = [config.MEASURES[m].label for m in config.CONDITIONS]
+    access = [config.MEASURES[m].label for m in config.ACCESS_MEASURES]
+    year = int(df["data_year"].mode().iloc[0])
+    cite = _citation(year)
+    txt = (
+        f"I cover {len(counties)} Massachusetts counties, data year {year}.\n"
+        f"Counties: {', '.join(counties)}.\n"
+        f"Conditions: {', '.join(conds)}.\n"
+        f"Access measures: {', '.join(access)}.\n\n{cite}"
+    )
+    return Answer(txt, DATASET_INFO, grounded=True, source_line=cite)
+
+
 def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
     # Guardrails: no query runs.
     if sq.intent == REFUSE_MEDICAL:
@@ -136,6 +152,8 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
         return Answer(
             f"I only have {config.SOURCE} data for {RELEASE_DATA_YEAR}. "
             "I can't show figures for other years.", sq.intent, grounded=True)
+    if sq.intent == DATASET_INFO:
+        return _dataset_info(df)
     if sq.intent == COUNTY_PROFILE and sq.area_filter:
         return _county_profile(df, sq.area_filter)
     if sq.condition is None and sq.intent != ACCESS_GAP:
