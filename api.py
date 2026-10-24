@@ -13,12 +13,14 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI
+import json
+
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from src import config, data_loader, nlu, answer as A
+from src import config, data_loader, nlu, answer as A, query as Q
 from src.llm import get_provider, provider_health
 
 app = FastAPI(title="Terravia Chatbot API", version="1.0")
@@ -36,6 +38,10 @@ app.add_middleware(
 # Load data + provider once at startup (cached for the process lifetime).
 _DF, _PROV = data_loader.load(prefer_live=False)
 _PROVIDER = get_provider(os.environ.get("HOTSPOT_LLM_PROVIDER", config.LLM_PROVIDER))
+
+# County GeoJSON, loaded once for the map endpoint.
+_GEOJSON_PATH = config.DATA_DIR / "ma_counties.geojson"
+_GEOJSON = json.loads(_GEOJSON_PATH.read_text()) if _GEOJSON_PATH.exists() else None
 
 
 class ChatRequest(BaseModel):
@@ -76,6 +82,45 @@ def chat(req: ChatRequest) -> ChatResponse:
         answer=text, intent=ans.intent, parsed_by=sq.parser,
         grounded=ans.grounded, source=_PROV.source, data_year=_PROV.data_year,
     )
+
+
+# --- Map endpoints ---------------------------------------------------------
+@app.get("/measures")
+def measures() -> dict:
+    """Conditions available for the map selector (map colors conditions only)."""
+    return {"measures": [
+        {"id": m, "label": config.MEASURES[m].label} for m in config.CONDITIONS
+    ]}
+
+
+@app.get("/geojson")
+def geojson() -> dict:
+    """MA county polygons (keyed by locationid/FIPS) for the choropleth."""
+    if _GEOJSON is None:
+        raise HTTPException(status_code=404, detail="geometry not available")
+    return _GEOJSON
+
+
+@app.get("/measures/{measureid}")
+def measure_values(measureid: str) -> dict:
+    """Per-county values for one measure, for coloring the map."""
+    if measureid not in config.MEASURES:
+        raise HTTPException(status_code=404, detail="unknown measure")
+    frame = Q.measure_frame(_DF, measureid)
+    rows = [{
+        "locationid": r["locationid"], "county": r["County"],
+        "value": r["Percent"], "low": r["Low"], "high": r["High"],
+        "population": r["Population"],
+    } for _, r in frame.iterrows()]
+    return {
+        "measureid": measureid,
+        "label": config.MEASURES[measureid].label,
+        "data_year": config.measure_year(measureid),
+        "source": _PROV.source,
+        "min": min(r["value"] for r in rows),
+        "max": max(r["value"] for r in rows),
+        "rows": rows,
+    }
 
 
 # Optionally serve the static site from the same origin (avoids CORS entirely).
