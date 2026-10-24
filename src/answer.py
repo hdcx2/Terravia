@@ -19,7 +19,17 @@ from . import config, query as Q
 from . import knowledge
 from .nlu import (StructuredQuery, RANKING, LOOKUP, ACCESS_GAP,
                   REFUSE_MEDICAL, OUT_OF_SCOPE, COUNTY_PROFILE, LIST_SUPPORTED,
-                  UNSUPPORTED_YEAR, DATASET_INFO, EXPLAIN)
+                  UNSUPPORTED_YEAR, DATASET_INFO, EXPLAIN, GREETING)
+
+GREETING_REPLY = (
+    "Hi! I'm Terravia. I can show you where chronic conditions cluster across "
+    "Massachusetts counties, using CDC PLACES data. Try one of these:\n"
+    "- \"Where is diabetes highest?\"\n"
+    "- \"High asthma and low checkup areas\"\n"
+    "- \"Tell me about Hampden\"\n"
+    "I cover diabetes, asthma, high blood pressure, COPD, uninsured rate, and "
+    "routine checkups across 14 MA counties."
+)
 
 RELEASE_DATA_YEAR = 2023
 MODELED_NOTE = "Values are model-based estimates, not diagnosed case counts."
@@ -173,6 +183,8 @@ def answer(df: pd.DataFrame, sq: StructuredQuery) -> Answer:
         return _dataset_info(df)
     if sq.intent == EXPLAIN:
         return _explain(sq)
+    if sq.intent == GREETING:
+        return Answer(GREETING_REPLY, sq.intent, grounded=True)
     if sq.intent == COUNTY_PROFILE and sq.area_filter:
         return _county_profile(df, sq.area_filter)
     if sq.condition is None and sq.intent != ACCESS_GAP:

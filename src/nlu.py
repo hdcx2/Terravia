@@ -28,9 +28,10 @@ LIST_SUPPORTED = "list_supported"   # unsupported condition -> show capabilities
 UNSUPPORTED_YEAR = "unsupported_year"  # a year other than the data year
 DATASET_INFO = "dataset_info"       # questions ABOUT the data (counties, years, coverage)
 EXPLAIN = "explain"                 # conceptual question -> RAG over our own docs
+GREETING = "greeting"               # hi / thanks / chit-chat -> friendly, inviting reply
 VALID_INTENTS = {RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE,
                  COUNTY_PROFILE, LIST_SUPPORTED, UNSUPPORTED_YEAR, DATASET_INFO,
-                 EXPLAIN}
+                 EXPLAIN, GREETING}
 
 
 @dataclass
@@ -171,6 +172,24 @@ def _asks_clinical_info(text: str) -> bool:
     questions about a disease's nature that we don't answer from county data."""
     t = text.lower()
     return any(re.search(p, t) for p in _CLINICAL_INFO_PATTERNS)
+
+
+# Greetings / thanks / chit-chat: short, contentless messages -> friendly reply
+# that invites a real question instead of a cold refusal.
+_GREETING_PATTERNS = [
+    r"^\s*(hi|hey|hello|yo|hiya|howdy|greetings|sup)\b",
+    r"^\s*(good )?(morning|afternoon|evening)\b",
+    r"\bhow are you\b", r"\bwhat'?s up\b",
+    r"^\s*(thanks|thank you|thx|ty|cheers|nice|cool|ok|okay|got it)\s*[!.]*\s*$",
+    r"^\s*(who are you|what are you|what is this)\s*\??\s*$",
+]
+
+
+def _is_greeting(text: str) -> bool:
+    if _match_measure(text) is not None:      # a real question takes priority
+        return False
+    t = text.lower().strip()
+    return any(re.search(p, t) for p in _GREETING_PATTERNS)
 
 
 def _names_unsupported_year(text: str) -> int | None:
@@ -349,6 +368,9 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
     # Personal-health/risk questions refuse, even if they name a condition.
     if _looks_medical(question):
         return StructuredQuery(REFUSE_MEDICAL, parser="guardrail")
+    # Greetings / thanks / chit-chat -> warm, inviting reply (not a refusal).
+    if _is_greeting(question):
+        return StructuredQuery(GREETING, parser="guardrail")
     # Unsupported health topic (cancer, obesity, ...) -> list what IS supported,
     # before any parsing, so we never show a ranking for an unnamed measure.
     if _names_unsupported_topic(question):

@@ -73,6 +73,12 @@ CASES = [
     ("How do you prevent COPD?", "list_supported"),
     ("Is asthma genetic?", "list_supported"),
 
+    # 8. Greetings / chit-chat -> friendly inviting reply (not a cold refusal).
+    ("hi", "greeting"),
+    ("hello there", "greeting"),
+    ("thanks!", "greeting"),
+    ("how are you?", "greeting"),
+
     # Controls: legitimate planning/research questions must STILL work.
     ("I'm planning a diabetes screening event around Springfield. Where should I look?", "ranking"),
     ("Where should we recruit patients for a hypertension trial?", "ranking"),

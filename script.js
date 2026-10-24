@@ -92,11 +92,13 @@ if (chatForm) {
     scrollToEnd();
   };
 
-  chatForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const question = input.value.trim();
+  const starters = document.getElementById('chat-starters');
+
+  const ask = async (question) => {
+    question = (question || '').trim();
     if (!question) return;
 
+    if (starters) starters.hidden = true;   // hide examples once chatting
     addMessage(question, 'user');
     input.value = '';
     input.disabled = true;
@@ -130,7 +132,19 @@ if (chatForm) {
       input.focus();
       scrollToEnd();
     }
+  };
+
+  chatForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    ask(input.value);
   });
+
+  // Clickable example questions so users know what they can ask.
+  if (starters) {
+    starters.querySelectorAll('.chat-starter').forEach((btn) => {
+      btn.addEventListener('click', () => ask(btn.textContent));
+    });
+  }
 }
 
 

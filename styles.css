@@ -402,6 +402,28 @@ body {
   color: white;
 }
 
+.chat-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.chat-starter {
+  padding: 6px 11px;
+  border: 1px solid #d6ddcf;
+  border-radius: 999px;
+  background: #f3f7f0;
+  color: #33463b;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.chat-starter:hover {
+  background: #e7efe2;
+  border-color: #bcccb0;
+}
+
 .chat-form {
   display: flex;
   gap: 8px;
