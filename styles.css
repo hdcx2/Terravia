@@ -899,6 +899,18 @@ body {
   font-weight: 600;
 }
 
+.map-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.map-control-label {
+  color: #5c6b63;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
 .map-control select {
   padding: 9px 14px;
   border: 1px solid #d6ddcf;
