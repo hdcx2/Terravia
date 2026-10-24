@@ -17,6 +17,50 @@ with the source, data year, and a model-based-estimate caveat on every result.
 - **Access measures:** uninsured (adults 18–64), routine checkup
 - **Access gap:** flags counties where burden is high *and* access is thin
 
+## Data source (exactly where the numbers come from)
+
+- **Provider:** CDC PLACES — *Local Data for Better Health*.
+- **Dataset:** PLACES **County** Data, **2025 release**, Socrata id **`swc5-untb`**.
+- **Portal page:** https://data.cdc.gov/d/swc5-untb
+- **API endpoint:** https://data.cdc.gov/resource/swc5-untb.json
+- **Filter we apply:** `stateabbr = 'MA'`, `data_value_type = 'Crude prevalence'`.
+- **Data year:** 2023 for every measure.
+- **Nature:** model-based estimates (small-area modeling of BRFSS survey data),
+  **not** counts of diagnosed patients.
+
+### Full dataset vs. what the app uses
+
+The full `swc5-untb` dataset for Massachusetts has **40 measures × 14 counties =
+560 rows**. The app deliberately uses a **6-measure subset** (the "clinical set":
+diabetes, asthma, high blood pressure, COPD, uninsured, routine checkup) so the
+tool stays focused on chronic-condition burden + access. The other 34 measures
+live in the same dataset and can be added by editing the measure list in
+`src/config.py` — no new source required.
+
+### Reproduce the pull
+
+```sh
+# The 6 measures the app uses, for MA counties:
+curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=Crude%20prevalence&\$where=measureid%20in('DIABETES','CASTHMA','BPHIGH','COPD','ACCESS2','CHECKUP')&\$limit=5000"
+
+# The FULL set (all 40 measures) for MA counties:
+curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=Crude%20prevalence&\$limit=5000"
+```
+
+### Data files in `data/`
+
+| File | Contents | Rows |
+|---|---|---|
+| `snapshot_places_ma.csv` | the 6-measure clinical set — **what the app loads** | 84 |
+| `places_ma_full.csv` | all 40 PLACES measures for MA (the complete menu) | 560 |
+| `places_ma_behavioral.csv` | alt set: smoking, mental distress, obesity, diabetes, checkup | 70 |
+| `ma_counties.geojson` | county boundary shapes for the map | 14 |
+| `snapshot_meta.json` | provenance record (dataset id, URL, years, measures) |  — |
+
+The app loads `snapshot_places_ma.csv` by default so it works offline. Set
+`prefer_live=True` (in `data_loader.load`) to pull fresh from the Socrata API
+instead.
+
 ## Architecture
 
 - `src/` — the agent: a rule-first router (`nlu.py`) with guardrails, a grounded
