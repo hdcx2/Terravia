@@ -13,7 +13,7 @@ with the source, data year, and a model-based-estimate caveat on every result.
 ## What it covers
 
 - **Geography:** 14 Massachusetts counties (CDC PLACES County, 2025 release, 2023 data)
-- **Conditions:** diabetes, asthma, high blood pressure, COPD
+- **Conditions:** diabetes, asthma, high blood pressure, COPD, obesity, frequent mental distress, smoking
 - **Access measures:** uninsured (adults 18 to 64), routine checkup
 - **Access gap:** flags counties where burden is high *and* access is thin
 
@@ -31,9 +31,10 @@ with the source, data year, and a model-based-estimate caveat on every result.
 ### Full dataset vs. what the app uses
 
 The full `swc5-untb` dataset for Massachusetts has **40 measures × 14 counties =
-560 rows**. The app deliberately uses a **6-measure subset** (the "clinical set":
-diabetes, asthma, high blood pressure, COPD, uninsured, routine checkup) so the
-tool stays focused on chronic-condition burden + access. The other 34 measures
+560 rows**. The app deliberately uses a **9-measure subset** (clinical +
+behavioral: diabetes, asthma, high blood pressure, COPD, obesity, mental
+distress, smoking, uninsured, routine checkup) so the tool stays focused on
+health burden + access. The other 31 measures
 live in the same dataset and can be added by editing the measure list in
 `src/config.py`: no new source required.
 
@@ -41,7 +42,7 @@ live in the same dataset and can be added by editing the measure list in
 
 ```sh
 # The 6 measures the app uses, for MA counties:
-curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=Crude%20prevalence&\$where=measureid%20in('DIABETES','CASTHMA','BPHIGH','COPD','ACCESS2','CHECKUP')&\$limit=5000"
+curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=Crude%20prevalence&\$where=measureid%20in('DIABETES','CASTHMA','BPHIGH','COPD','OBESITY','MHLTH','CSMOKING','ACCESS2','CHECKUP')&\$limit=5000"
 
 # The FULL set (all 40 measures) for MA counties:
 curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=Crude%20prevalence&\$limit=5000"
@@ -51,7 +52,7 @@ curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=
 
 | File | Contents | Rows |
 |---|---|---|
-| `snapshot_places_ma.csv` | the 6-measure clinical set: **what the app loads** | 84 |
+| `snapshot_places_ma.csv` | the 9-measure clinical+behavioral set: **what the app loads** | 126 |
 | `places_ma_full.csv` | all 40 PLACES measures for MA (the complete menu) | 560 |
 | `places_ma_behavioral.csv` | alt set: smoking, mental distress, obesity, diabetes, checkup | 70 |
 | `ma_counties.geojson` | county boundary shapes for the map | 14 |

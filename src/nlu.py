@@ -99,8 +99,7 @@ _PLANNING_ALLOW = [
 # Naming any of these means the user wants something we do not serve.
 _UNSUPPORTED_TOPICS = [
     r"\bcancer\b", r"\bheart disease\b", r"\bheart attack\b", r"\bstroke\b",
-    r"\bdepression\b", r"\bmental (health|distress)\b", r"\banxiety\b",
-    r"\bobesity\b", r"\boverweight\b", r"\bsmoking\b", r"\bcigarette\b",
+    r"\bdepression\b", r"\banxiety\b",
     r"\bsleep\b", r"\balcohol\b", r"\bdrinking\b", r"\bkidney\b", r"\bcholesterol\b",
     r"\bflu\b", r"\bcovid\b", r"\bhiv\b", r"\bdementia\b", r"\barthritis\b",
     r"\bcardiology\b", r"\bcardiac\b", r"\bcardiovascular\b",

@@ -22,13 +22,14 @@ from .nlu import (StructuredQuery, RANKING, LOOKUP, ACCESS_GAP,
                   UNSUPPORTED_YEAR, DATASET_INFO, EXPLAIN, GREETING)
 
 GREETING_REPLY = (
-    "Hi! I'm Terravia. I can show you where chronic conditions cluster across "
+    "Hi! I'm Terravia. I can show you where health conditions cluster across "
     "Massachusetts counties, using CDC PLACES data. Try one of these:\n"
     "- \"Where is diabetes highest?\"\n"
-    "- \"High asthma and low checkup areas\"\n"
+    "- \"High obesity and low checkup areas\"\n"
     "- \"Tell me about Hampden\"\n"
-    "I cover diabetes, asthma, high blood pressure, COPD, uninsured rate, and "
-    "routine checkups across 14 MA counties."
+    "I cover diabetes, asthma, high blood pressure, COPD, obesity, mental "
+    "distress, and smoking, plus uninsured rate and routine checkups across "
+    "14 MA counties."
 )
 
 RELEASE_DATA_YEAR = 2023

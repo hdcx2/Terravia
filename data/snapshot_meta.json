@@ -7,8 +7,18 @@
   "state": "MA",
   "data_year": 2023,
   "data_value_type": "Crude prevalence",
-  "measures": ["DIABETES", "CASTHMA", "BPHIGH", "COPD", "ACCESS2", "CHECKUP"],
-  "row_count": 84,
+  "measures": [
+    "DIABETES",
+    "CASTHMA",
+    "BPHIGH",
+    "COPD",
+    "OBESITY",
+    "MHLTH",
+    "CSMOKING",
+    "ACCESS2",
+    "CHECKUP"
+  ],
+  "row_count": 126,
   "counties": 14,
   "note": "Values are model-based estimates, not diagnosed case counts. 95% CIs of top-ranked counties often overlap; treat rankings as directional."
 }

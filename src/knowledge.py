@@ -56,9 +56,11 @@ KB: list[Snippet] = [
         title="What conditions and measures are covered",
         keywords=("conditions", "measures", "diseases", "cover", "supported",
                   "diabetes", "asthma", "copd", "blood pressure", "uninsured",
-                  "checkup", "access", "which"),
-        text=("Four conditions: diabetes, current asthma, high blood pressure, "
-              "and COPD. Two access/prevention measures: lack of health "
+                  "checkup", "access", "which", "obesity", "smoking",
+                  "mental distress"),
+        text=("Seven health measures: diabetes, current asthma, high blood "
+              "pressure, COPD, obesity, frequent mental distress, and current "
+              "smoking. Two access/prevention measures: lack of health "
               "insurance among adults 18-64, and a routine checkup in the past "
               "year. Each is reported as a crude prevalence percentage per "
               "county."),

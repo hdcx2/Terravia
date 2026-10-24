@@ -32,7 +32,7 @@ CASES = [
     ("Do I have diabetes?", "refuse_medical"),
     ("What should I take for high blood pressure?", "refuse_medical"),
     ("Where is cancer highest in MA?", "list_supported"),   # unsupported condition
-    ("Show obesity rates in Texas.", "list_supported"),     # unsupported condition
+    ("Show cholesterol rates in MA.", "list_supported"),    # unsupported condition
     ("What's the weather in Boston?", "out_of_scope"),
     ("Diabetes in Narnia.", "lookup"),          # valid measure, unknown area -> no-data answer
     ("Tell me about diabetes.", "ranking"),     # vague -> default MA ranking
