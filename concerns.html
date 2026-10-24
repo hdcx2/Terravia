@@ -75,6 +75,7 @@
           <nav class="section-tabs" aria-label="Concerns sections">
             <a href="#ethical">Ethical</a>
             <a href="#technical">Technical</a>
+            <a href="#limitations">Limitations</a>
           </nav>
         </section>
 
@@ -99,15 +100,29 @@
             <span class="card-index">02 / TECHNICAL</span>
             <h2>Data and method</h2>
             <p>
-              Sources differ in quality, geographic scale, and how recently they were
-              collected. Combining them demands deliberate methodological choices and clear
-              documentation, so that every map and summary can be read for exactly what it
-              represents.
+               Terravia uses one source, CDC PLACES county data (2025 release), 
+               so every figure on the map and in the chat comes from the same place, year, and method.
             </p>
             <ul>
-              <li>Document sources, collection dates, and definitions.</li>
-              <li>Reconcile differences in geographic scale.</li>
-              <li>Build for accessibility and sustained updates.</li>
+              <li>Every number comes from the dataset, never from the AI. Answers containing a number not in the data are withheld.</li>
+              <li>Every figure shows its source, year, and 95% confidence interval.</li>
+              <li>Tested: 22/22 sample questions, 37/37 guardrail cases, 500 random inputs with zero made-up numbers.</li>
+            </ul>
+          </article>
+
+          <article class="concern-card limitations-card" id="limitations">
+            <span class="card-index">03 / LIMITATIONS</span>
+            <h2>Behind the Data</h2>
+            <p>
+              Terravia is built on modeled estimates, so being clear about what those
+              numbers can and cannot tell you is part of using them responsibly.
+            </p>
+            <ul>
+              <li>Values are modeled estimates from a national survey, not counts of diagnosed patients.</li>
+              <li>County-level only: differences within a county are hidden.</li>
+              <li>Confidence intervals overlap, so we say "among the highest," never "the highest."</li>
+              <li>No individual data is used. No one can be identified.</li>
+              <li>The assistant does not give medical advice and redirects personal health questions.</li>
             </ul>
           </article>
         </div>
