@@ -7,4 +7,4 @@
 //
 // Leave empty ("") only when the API serves this site from the SAME origin
 // (i.e. you ran it with TERRAVIA_SERVE_SITE=1).
-window.TERRAVIA_API = "http://localhost:8000";
+window.TERRAVIA_API = "https://terravia-api.onrender.com";
