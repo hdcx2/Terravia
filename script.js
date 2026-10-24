@@ -132,3 +132,126 @@ if (chatForm) {
     }
   });
 }
+
+
+/* ---------------------------------------------------------------------------
+ * Interactive choropleth map (D3, SVG only — no tiles, no API key, no watermark)
+ * Draws MA county polygons from the API and colors them by a chosen condition.
+ * ------------------------------------------------------------------------- */
+function initTerraviaMap() {
+  const mapSvgEl = document.getElementById('map-svg');
+  if (!mapSvgEl) return;
+  const caption = document.getElementById('map-caption');
+  if (typeof window.d3 === 'undefined') {
+    if (caption) caption.textContent = 'Map library failed to load.';
+    return;
+  }
+  const svg = d3.select('#map-svg');
+  const tooltip = document.getElementById('map-tooltip');
+  const legend = document.getElementById('map-legend');
+  const selectEl = document.getElementById('map-measure');
+
+  const W = 680, H = 420;
+  svg.attr('viewBox', `0 0 ${W} ${H}`)
+     .attr('preserveAspectRatio', 'xMidYMid meet')
+     .style('width', '100%')
+     .style('height', 'auto');
+
+  let geo = null;
+
+  const colorFor = (v, lo, hi) => {
+    // Sequential green ramp (matches the site palette). Guard a flat range.
+    const t = hi > lo ? (v - lo) / (hi - lo) : 0.5;
+    return d3.interpolate('#eaf2e9', '#2f6b47')(t);
+  };
+
+  const drawLegend = (lo, hi) => {
+    legend.innerHTML =
+      `<span class="map-legend-label">${lo.toFixed(1)}%</span>` +
+      '<span class="map-legend-bar"></span>' +
+      `<span class="map-legend-label">${hi.toFixed(1)}%</span>`;
+  };
+
+  const showTip = (evt, county, d) => {
+    tooltip.hidden = false;
+    tooltip.innerHTML =
+      `<strong>${county}</strong><br>${d.label}: ${d.value.toFixed(1)}%` +
+      `<br><span class="map-tip-ci">95% CI ${d.low.toFixed(1)}–${d.high.toFixed(1)}</span>`;
+    const r = mapSvgEl.getBoundingClientRect();
+    tooltip.style.left = `${evt.clientX - r.left + 12}px`;
+    tooltip.style.top = `${evt.clientY - r.top + 12}px`;
+  };
+  const hideTip = () => { tooltip.hidden = true; };
+
+  const render = async (measureid) => {
+    try {
+      const res = await fetch(`${TERRAVIA_API}/measures/${measureid}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const byId = new Map(data.rows.map((r) => [String(r.locationid), r]));
+
+      const projection = d3.geoMercator().fitSize([W, H], geo);
+      const path = d3.geoPath(projection);
+
+      const counties = svg.selectAll('path.county').data(geo.features, (f) => f.properties.locationid);
+      counties.join(
+        (enter) => enter.append('path').attr('class', 'county').attr('d', path),
+        (update) => update,
+      )
+        .attr('d', path)
+        .attr('fill', (f) => {
+          const row = byId.get(String(f.properties.locationid));
+          return row ? colorFor(row.value, data.min, data.max) : '#e6e8e4';
+        })
+        .attr('stroke', '#ffffff')
+        .attr('stroke-width', 0.8)
+        .style('cursor', 'pointer')
+        .on('mousemove', (evt, f) => {
+          const row = byId.get(String(f.properties.locationid));
+          if (row) showTip(evt, row.county, { ...row, label: data.label });
+        })
+        .on('mouseleave', hideTip);
+
+      drawLegend(data.min, data.max);
+      caption.textContent =
+        `${data.label} — ${data.source}, ${data.data_year}. Shades run county low to high; values are model-based estimates.`;
+    } catch (err) {
+      caption.textContent = `Map data error: ${err.message}`;
+      console.error('Terravia map render error:', err);
+    }
+  };
+
+  const init = async () => {
+    caption.textContent = 'Loading map…';
+    try {
+      const [gj, ms] = await Promise.all([
+        fetch(`${TERRAVIA_API}/geojson`).then((r) => {
+          if (!r.ok) throw new Error(`geojson HTTP ${r.status}`);
+          return r.json();
+        }),
+        fetch(`${TERRAVIA_API}/measures`).then((r) => {
+          if (!r.ok) throw new Error(`measures HTTP ${r.status}`);
+          return r.json();
+        }),
+      ]);
+      geo = gj;
+      selectEl.innerHTML = ms.measures
+        .map((m) => `<option value="${m.id}">${m.label}</option>`)
+        .join('');
+      selectEl.addEventListener('change', () => render(selectEl.value));
+      await render(ms.measures[0].id);
+    } catch (err) {
+      caption.textContent = `Map unavailable: ${err.message}`;
+      console.error('Terravia map init error:', err);
+    }
+  };
+
+  init();
+}
+
+// Run after everything (including the deferred D3) has loaded.
+if (document.readyState === 'complete') {
+  initTerraviaMap();
+} else {
+  window.addEventListener('load', initTerraviaMap);
+}

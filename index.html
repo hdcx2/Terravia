@@ -8,9 +8,10 @@
       content="Terravia connects Massachusetts communities with clear information about health conditions and local resources."
     >
     <title>Terravia | Home</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="config.js"></script>
-    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <script src="config.js?v=2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js" defer></script>
+    <script src="script.js?v=2" defer></script>
   </head>
 
   <body>
@@ -32,10 +33,6 @@
           <a href="about.html">
             <span class="nav-icon">i</span>
             <span class="nav-label">About Us</span>
-          </a>
-          <a href="map.html">
-            <span class="nav-icon">◍</span>
-            <span class="nav-label">Map</span>
           </a>
           <a href="concerns.html">
             <span class="nav-icon">◎</span>
@@ -105,6 +102,27 @@
 
             <p class="chat-disclaimer">Model-based estimates from CDC PLACES (2023). Not medical advice.</p>
           </div>
+        </section>
+
+        <section class="map-section" aria-labelledby="map-title">
+          <div class="map-heading">
+            <div>
+              <p class="eyebrow">See it on the map</p>
+              <h2 id="map-title">Chronic conditions by county</h2>
+            </div>
+            <label class="map-control">
+              <span class="map-control-label">Condition</span>
+              <select id="map-measure" aria-label="Select a condition to map"></select>
+            </label>
+          </div>
+
+          <div class="map-wrap">
+            <svg id="map-svg" role="img" aria-label="Choropleth map of Massachusetts counties"></svg>
+            <div id="map-tooltip" class="map-tooltip" role="status" aria-live="polite" hidden></div>
+          </div>
+
+          <div class="map-legend" id="map-legend" aria-hidden="true"></div>
+          <p class="map-caption" id="map-caption"></p>
         </section>
 
         <footer class="site-footer">
