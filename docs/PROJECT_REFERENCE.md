@@ -40,16 +40,36 @@ small API on Render.
 
 ## 3. The data (and why we trust it)
 
-- **Source:** CDC PLACES, County data, 2025 release — public, no login, no patient data.
-- **Scope:** 14 Massachusetts counties, data year **2023**, six measures:
+- **Source:** CDC PLACES, County data, 2025 release (dataset `swc5-untb` on
+  `data.cdc.gov`) — public, no login, no patient data.
+- **The full dataset** for Massachusetts has **40 measures × 14 counties = 560
+  rows** (everything PLACES publishes: conditions, behaviors, screenings,
+  disabilities, social needs). We pull from this via the Socrata API.
+- **What the app actually uses:** a deliberate **6-measure subset** of those 40 —
   diabetes, asthma, high blood pressure, COPD (the conditions) + uninsured
-  (adults 18–64) and routine checkup (the access measures).
-- **Size:** 84 rows (6 measures × 14 counties). Small enough that we cache it
+  (adults 18–64) and routine checkup (the access measures). This is the "clinical
+  set" we chose so the tool has a sharp, consistent focus (chronic-condition
+  burden + access), rather than a shallow pass over everything.
+- **Size used:** 84 rows (6 measures × 14 counties). Small enough to cache
   locally, so the app works **offline during a demo** and loads instantly.
+- **Why only 6 of 40?** A focused story demos better and is easier to validate.
+  The other 34 measures (stroke, depression, obesity, smoking, food/housing
+  insecurity, etc.) are available in the same dataset and could be added by
+  changing a config list — no new data source needed.
+
 - **Honesty built in:** these are **model-based estimates**, not counts of
   diagnosed patients. We say so on every number. We also noticed the counties'
   confidence intervals **overlap** — so the app says "among the highest," never
   "definitively the highest," and shows the ± range.
+
+### Data files in the repo
+| File | Measures | Rows | Role |
+|---|---|---|---|
+| `data/snapshot_places_ma.csv` | 6 (clinical) | 84 | **what the app loads** (offline snapshot) |
+| `data/places_ma_full.csv` | 40 (all) | 560 | full MA export — the complete menu of measures |
+| `data/places_ma_behavioral.csv` | 5 (behavioral) | 70 | alt set (smoking, mental distress, obesity, diabetes, checkup) |
+| `data/ma_counties.geojson` | — | 14 | county shapes for the map |
+| `data/snapshot_meta.json` | — | — | provenance record (dataset id, years, measures) |
 
 ---
 
@@ -95,6 +115,31 @@ We don't send every question to a language model. We go in this order:
 This means the app works even with **no AI at all** (the rules alone answer most
 things), which is why the demo can't break.
 
+### What kinds of questions it handles
+
+The router recognizes several intents, each with a tailored, grounded response:
+
+- **ranking** — "where is diabetes highest" → top counties for a condition.
+- **lookup** — "diabetes rate in Worcester" → one county's value.
+- **access_gap** — "high asthma and low checkups" → counties high-burden +
+  low-access.
+- **county_profile** — a county named with no measure ("tell me about Hampden")
+  → all six measures for that county.
+- **multi-condition** — "diabetes and asthma" → a ranking for *each* named
+  condition (we don't silently drop the second one).
+- **dataset_info** — "what counties/years/conditions are covered" → answered from
+  the real data, not a canned line.
+- **explain** (RAG) — conceptual questions ("what does the access gap mean?",
+  "how recent is the data?") → answered from our **own curated project notes**
+  (see §5), so the bot is helpful without inventing facts.
+- **Safety intents** — personal medical questions, unsupported topics (cancer,
+  obesity), disease-nature questions ("what causes diabetes"), and non-2023 years
+  each get a specific, correct refusal/redirect **before** any data or AI runs.
+
+Each of these was hardened against paraphrases through repeated held-out testing
+(see §5): when a real question slipped through to a generic refusal, we gave it a
+proper intent that answers from the actual data.
+
 ---
 
 ## 5. How we handled the language model (and made it swappable)
@@ -113,6 +158,22 @@ change at all. The LLM only ever does two narrow jobs: **turn a question into a
 structured query**, and (optionally) **reword the final sentence** — never
 produce a number.
 
+### RAG over our own content (for conceptual questions)
+
+For "what is this / how does it work / how recent is the data" questions, the
+bot uses a small **retrieval step over a curated knowledge base of our own
+notes** (`src/knowledge.py`: what Terravia is, the data source, measure
+definitions, the access-gap rule, the estimate/CI caveat, geographic scope).
+
+- Retrieval is **deterministic keyword matching** over a handful of snippets —
+  no vector database, works offline, easy to reason about.
+- The answer is composed from **our authored snippets only** — never general
+  world knowledge and never a statistic. So the bot is genuinely helpful on
+  project/data questions while the no-hallucination rule stays intact.
+- World-knowledge medical questions ("what causes diabetes", "is asthma
+  genetic") are **not** answered from these notes; they're redirected, because
+  that's the right behavior for a health tool.
+
 ### How we "calibrated" / kept it honest
 
 We didn't tune the model's weights — we constrained and tested it:
@@ -124,9 +185,11 @@ We didn't tune the model's weights — we constrained and tested it:
    results** (within a small tolerance). If a number appears that isn't in the
    data, the answer is withheld. This is the safety net behind the whole thing.
 3. **Automated test suites** we ran repeatedly as we changed things:
-   - `eval_questions` (20 sample questions) — correct intent + grounded
-   - `eval_guardrails` (38 cases) — medical refusals, unsupported topics/years,
-     county profiles, with multiple paraphrases each
+   - `eval_questions` (22 sample questions + multi-condition coverage) — correct
+     intent + grounded, and every named condition addressed
+   - `eval_guardrails` (37 cases) — medical refusals, unsupported topics/years,
+     disease-nature redirects, county profiles, dataset-info, and RAG/explain,
+     with multiple paraphrases each
    - `eval_llm_router` — proves the rule→LLM fallback behaves
    - `eval_ollama` / `eval_heldout` — ran real local-model answers
    - `browser_check` — a real headless browser confirms the map renders
@@ -137,8 +200,10 @@ We didn't tune the model's weights — we constrained and tested it:
 
 ### Calibration results (what we measured)
 
-- Sample questions: **20/20** correct, every answer grounded.
-- Guardrails: **38/38** across paraphrases; zero medical-advice leaks.
+- Sample questions: **22/22** correct, every answer grounded; multi-condition
+  answers cover **every** named condition.
+- Guardrails: **37/37** across paraphrases; zero medical-advice leaks and zero
+  cases where an unsupported/disease-nature question returned county data.
 - Fuzz test: **500 random/adversarial inputs → 0 crashes, 0 made-up numbers.**
 - Two local models (qwen2.5 and qwen2.5-coder) both passed; the score barely
   moved when we swapped models, which proved the *architecture* (not the model)
@@ -151,6 +216,7 @@ We didn't tune the model's weights — we constrained and tested it:
 | Choice | Why |
 |---|---|
 | **County level, Massachusetts only** | Small, clean, complete data; finishes in a hackathon window; a sharp focused story beats a shallow national one. |
+| **6-measure subset (of 40 available)** | A focused burden+access story demos better and is easy to validate; the other 34 measures are one config change away if we want them. |
 | **Numbers come from data, not the LLM** | Makes hallucinated statistics structurally impossible — essential for a health tool. |
 | **Rule-first routing** | Fast, deterministic, works offline; the LLM is a helper for hard phrasings, not a dependency. |
 | **Swappable LLM with a `null` default** | The demo can't break on a missing key or dead network; privacy option via local Ollama. |
@@ -182,6 +248,17 @@ We didn't tune the model's weights — we constrained and tested it:
 - **Browser cache hiding fixes.** Repeatedly looked "broken" when it was fixed —
   solved with cache-busting version strings and by verifying in a fresh headless
   browser instead of trusting a possibly-cached view.
+- **Which measures are we actually using?** PLACES has 40 measures; we pulled a
+  6-measure clinical slice. A behavioral slice (smoking, obesity, mental
+  distress) was floating around too, which caused a "we don't have asthma"
+  mix-up. Resolved by exporting the **full 40-measure MA dataset** so the
+  available menu is explicit, and documenting exactly which 6 the app uses and
+  why (see §3).
+- **Generic refusals on fair questions.** Legitimate questions ("what counties
+  are included?", "what does the access gap mean?", "diabetes and asthma") kept
+  hitting the generic "I can only answer…" message. Fixed by giving each a real
+  intent that answers from the actual data/notes, rather than widening the
+  fallback.
 
 ---
 
