@@ -86,6 +86,13 @@ if (chatForm) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),
       });
+      if (res.status === 422) {
+        // Validation error (e.g. question too long): tell the user plainly.
+        pending.classList.remove('is-pending');
+        pending.textContent =
+          'That question is too long. Please shorten it to under 500 characters.';
+        return;
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderBotAnswer(pending, data.answer);
