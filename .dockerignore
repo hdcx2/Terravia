@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.py[cod]
+.git/
+.github/
+.kiro/
+eval/
+images/
+*.html
+styles.css
+script.js
+config.js
+README.md

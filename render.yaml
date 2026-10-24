@@ -1,0 +1,32 @@
+# Render blueprint for the Terravia chatbot API.
+#
+# Deploys api.py as a free web service with an https:// URL. GitHub Pages serves
+# the static site; this serves /chat and /health. After the first deploy, copy
+# the service URL into config.js (window.TERRAVIA_API) so the live site's chat
+# calls this API.
+#
+# Setup: Render dashboard -> New -> Blueprint -> pick this repo. Free tier spins
+# down when idle and cold-starts on the next request (a few seconds).
+
+services:
+  - type: web
+    name: terravia-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: "pip install -r requirements.txt"
+    # Render provides $PORT; the API must bind to it.
+    startCommand: "uvicorn api:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.6"
+      # Restrict CORS to the GitHub Pages origin. Change if you use a custom
+      # domain. Use "*" only for quick throwaway demos.
+      - key: TERRAVIA_CORS_ORIGINS
+        value: "https://wilsonz347.github.io"
+      # Rule-based parser by default (no key needed, demo-safe). To enable a
+      # hosted LLM, set HOTSPOT_LLM_PROVIDER=openai and add OPENAI_API_KEY as a
+      # secret in the Render dashboard (do not commit keys).
+      - key: HOTSPOT_LLM_PROVIDER
+        value: "null"
