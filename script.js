@@ -2,17 +2,43 @@ const sidebar = document.querySelector('.sidebar');
 const menuToggle = document.querySelector('.menu-toggle');
 
 if (sidebar && menuToggle) {
-  menuToggle.addEventListener('click', () => {
-    const expanded = sidebar.classList.toggle('is-expanded');
+  const SIDEBAR_KEY = 'terravia-sidebar-expanded';
+
+  // Keep the button's state in sync and (optionally) remember it so the
+  // sidebar stays open across page/tab navigation until the user collapses it.
+  const applyExpanded = (expanded, persist = true) => {
+    sidebar.classList.toggle('is-expanded', expanded);
     menuToggle.setAttribute('aria-expanded', String(expanded));
     menuToggle.setAttribute('aria-label', expanded ? 'Collapse navigation' : 'Expand navigation');
+    if (persist) {
+      try {
+        localStorage.setItem(SIDEBAR_KEY, expanded ? '1' : '0');
+      } catch (err) {
+        /* storage unavailable (private mode) — state just won't persist */
+      }
+    }
+  };
+
+  // Restore the remembered state on load. Skip persisting on compact screens so
+  // the sidebar never starts open as an overlay on small viewports.
+  let remembered = false;
+  try {
+    remembered = localStorage.getItem(SIDEBAR_KEY) === '1';
+  } catch (err) {
+    /* storage unavailable — default to collapsed */
+  }
+  const startCompact = window.matchMedia('(max-width: 650px)').matches;
+  if (remembered && !startCompact) {
+    applyExpanded(true, false);
+  }
+
+  menuToggle.addEventListener('click', () => {
+    applyExpanded(!sidebar.classList.contains('is-expanded'));
   });
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && sidebar.classList.contains('is-expanded')) {
-      sidebar.classList.remove('is-expanded');
-      menuToggle.setAttribute('aria-expanded', 'false');
-      menuToggle.setAttribute('aria-label', 'Expand navigation');
+      applyExpanded(false);
       menuToggle.focus();
     }
   });
@@ -20,9 +46,7 @@ if (sidebar && menuToggle) {
   document.addEventListener('click', (event) => {
     const compact = window.matchMedia('(max-width: 650px)').matches;
     if (compact && sidebar.classList.contains('is-expanded') && !sidebar.contains(event.target)) {
-      sidebar.classList.remove('is-expanded');
-      menuToggle.setAttribute('aria-expanded', 'false');
-      menuToggle.setAttribute('aria-label', 'Expand navigation');
+      applyExpanded(false);
     }
   });
 }
