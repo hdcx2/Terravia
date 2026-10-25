@@ -851,6 +851,29 @@ body {
 .map-game-controls > p { margin: 0; white-space: nowrap; color: #294a38; font-size: 12px; font-weight: 700; }
 .map-game-controls > p strong, #game-best { display: block; }
 #game-best { margin-top: 2px; color: #7a897f; font-size: 9px; font-weight: 500; }
+.game-rounds {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.game-rounds li {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid #d5dfd1;
+  border-radius: 50%;
+  background: #ffffffa8;
+  color: #7a897f;
+  font-size: 10px;
+  font-weight: 700;
+  transition: background .18s, color .18s, border-color .18s, transform .18s;
+}
+.game-rounds li.is-current { transform: scale(1.12); border-color: #527d58; background: #527d58; color: #fff; }
+.game-rounds li.is-complete { border-color: #9cbd96; background: #dbead6; color: #315e3a; }
 #game-button {
   padding: 9px 12px;
   border: 0;
@@ -866,6 +889,7 @@ body {
 }
 #game-button:hover { transform: translateY(-1px); background: var(--green-dark); }
 #game-button:disabled { opacity: .5; cursor: wait; transform: none; }
+.map-game.is-playing #game-button:disabled { opacity: .75; cursor: default; }
 #game-button:focus-visible { outline: 2px solid #6f9a71; outline-offset: 3px; }
 .game-feedback { grid-column: 1 / -1; margin: 0; color: #65756b; font-size: 10px; }
 .map-game.is-playing { border-color: #b8cfb4; box-shadow: inset 3px 0 #77a37b; }
@@ -1052,6 +1076,9 @@ body {
   stroke: #173d2c !important;
   stroke-width: 3px !important;
 }
+.county.is-game-correct { stroke: #17693d !important; stroke-width: 4px !important; filter: drop-shadow(0 0 3px #fff); }
+.county.is-game-miss { stroke: #a3483e !important; stroke-width: 3.5px !important; }
+.county.is-game-answer { stroke: #245f8d !important; stroke-width: 3.5px !important; stroke-dasharray: 5 3; }
 
 .map-tooltip {
   position: absolute;

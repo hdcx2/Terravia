@@ -215,16 +215,29 @@ function initTerraviaMap() {
   const gameBest = document.getElementById('game-best');
   const gameButton = document.getElementById('game-button');
   const gameFeedback = document.getElementById('game-feedback');
+  const gameRounds = document.getElementById('game-rounds');
   const GAME_BEST_KEY = 'terravia-map-scout-best-v1';
   let challengeActive = false;
   let challengeAwaitingPick = false;
   let challengeRounds = 0;
   let challengePoints = 0;
   let challengeMeasure = null;
+  let challengeLoading = false;
   let availableMeasures = [];
   let personalBest = 0;
   try { personalBest = Number(localStorage.getItem(GAME_BEST_KEY)) || 0; } catch (err) { /* best score is optional */ }
   if (gameBest) gameBest.textContent = `Personal best: ${personalBest}`;
+
+  const updateRoundProgress = () => {
+    if (!gameRounds) return;
+    gameRounds.querySelectorAll('li').forEach((step, index) => {
+      const complete = index < challengeRounds;
+      const current = challengeActive && (challengeAwaitingPick || challengeLoading) && index === challengeRounds;
+      step.classList.toggle('is-complete', complete);
+      step.classList.toggle('is-current', current);
+      step.setAttribute('aria-current', current ? 'step' : 'false');
+    });
+  };
 
   const colorFor = (v, lo, hi) => {
     const t = Math.max(0, Math.min(1, hi > lo ? (v - lo) / (hi - lo) : 0.5));
@@ -346,9 +359,15 @@ function initTerraviaMap() {
       } else {
         const answer = Array.from(currentRows.values()).find((item) => Math.abs(item.value - highest) < 0.0001);
         gameFeedback.textContent = `Good try. ${answer.county} is highest for ${currentLabel} at ${highest.toFixed(1)}%. Take that pattern with you to the next round.`;
+        mapSvgEl.querySelector(`[data-locationid="${answer.locationid}"]`)?.classList.add('is-game-answer');
       }
+      mapSvgEl.querySelector(`[data-locationid="${row.locationid}"]`)?.classList.add(
+        Math.abs(row.value - highest) < 0.0001 ? 'is-game-correct' : 'is-game-miss'
+      );
       gameScore.textContent = `${challengePoints} / 3`;
       gameButton.textContent = challengeRounds < 3 ? `Next round (${challengeRounds + 1}/3) →` : 'See results →';
+      gameButton.disabled = false;
+      updateRoundProgress();
       gamePanel.classList.toggle('is-playing', challengeRounds < 3);
     }
     selectedCounty = row;
@@ -373,29 +392,45 @@ function initTerraviaMap() {
         ? 'Brilliant map reading. You spotted every county hotspot.'
         : 'Nice exploring. Try again to beat your personal best.';
       gameButton.textContent = 'Play again →';
+      gameButton.disabled = false;
+      selectEl.disabled = false;
+      challengeAwaitingPick = false;
+      updateRoundProgress();
       return;
     }
     challengeActive = true;
+    challengeAwaitingPick = false;
+    challengeLoading = true;
+    gamePanel.classList.add('is-playing');
+    gameButton.disabled = true;
+    gameButton.textContent = 'Loading round…';
+    selectEl.disabled = true;
+    updateRoundProgress();
     challengeMeasure = availableMeasures[Math.floor(Math.random() * availableMeasures.length)].id;
     selectEl.value = challengeMeasure;
-    render(challengeMeasure);
+    render(challengeMeasure).then((loaded) => {
+      challengeLoading = false;
+      if (loaded && challengeAwaitingPick) {
+        gameButton.textContent = 'Pick a county on the map ↑';
+        gameButton.disabled = true;
+      } else {
+        challengeActive = false;
+        selectEl.disabled = false;
+        gameButton.disabled = false;
+        gameButton.textContent = 'Try this round again →';
+        gameFeedback.textContent = 'The county map did not load. Try the round again in a moment.';
+      }
+      updateRoundProgress();
+    });
     document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   if (gameButton) {
     gameButton.addEventListener('click', () => {
-      if (!challengeActive && challengeRounds === 0) {
-        challengeRounds = 0;
-        challengePoints = 0;
-        gameScore.textContent = '0 / 3';
-        gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
-        gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
-        gameButton.textContent = 'Choose a county above ↑';
-        advanceChallenge();
-      } else if (challengeActive && !challengeAwaitingPick) {
-        if (challengeRounds >= 3) advanceChallenge();
-        else {
-          gameButton.textContent = 'Choose a county above ↑';
+      if (challengeActive && !challengeAwaitingPick) {
+        if (challengeRounds >= 3) {
+          advanceChallenge();
+        } else {
           gamePrompt.textContent = `Round ${challengeRounds + 1}: find the county with the highest estimate. Click a county on the map.`;
           advanceChallenge();
         }
@@ -405,7 +440,16 @@ function initTerraviaMap() {
         gameScore.textContent = '0 / 3';
         gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
         gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
-        gameButton.textContent = 'Choose a county above ↑';
+        gameButton.textContent = 'Loading round…';
+        advanceChallenge();
+      } else if (!challengeActive && !challengeAwaitingPick) {
+        if (challengeRounds === 0) {
+          challengePoints = 0;
+          gameScore.textContent = '0 / 3';
+          gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
+          gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
+        }
+        gameButton.textContent = 'Loading round…';
         advanceChallenge();
       }
     });
@@ -427,7 +471,9 @@ function initTerraviaMap() {
       if (challengeActive && data.measureid === challengeMeasure) {
         challengeAwaitingPick = true;
         gamePrompt.textContent = `Round ${challengeRounds + 1}: click the county with the highest ${currentLabel} estimate.`;
-        gameButton.textContent = 'Your pick is on the map ↑';
+        gameButton.textContent = 'Pick a county on the map ↑';
+        gameButton.disabled = true;
+        updateRoundProgress();
       }
       const project = makeProjection();
       mapSvgEl.replaceChildren();
@@ -465,9 +511,11 @@ function initTerraviaMap() {
       drawLegend(data.min, data.max);
       caption.textContent =
         `${data.label}: ${data.source}, ${data.data_year}. Shades run county low to high; values are model-based estimates.`;
+      return true;
     } catch (err) {
       caption.textContent = `Map data error: ${err.message}`;
       console.error('Terravia map render error:', err);
+      return false;
     }
   };
 
@@ -503,6 +551,7 @@ function initTerraviaMap() {
       pendingMeasure = null;
       selectEl.value = initialMeasure;
       gameButton.disabled = false;
+      updateRoundProgress();
       await render(initialMeasure);
     } catch (err) {
       caption.textContent = `Map unavailable: ${err.message}`;

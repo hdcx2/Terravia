@@ -8,9 +8,9 @@
       content="Terravia connects Massachusetts communities with clear information about health conditions and local resources."
     >
     <title>Terravia | Home</title>
-    <link rel="stylesheet" href="styles.css?v=6">
+    <link rel="stylesheet" href="styles.css?v=7">
     <script src="config.js?v=3"></script>
-    <script src="script.js?v=6" defer></script>
+    <script src="script.js?v=7" defer></script>
   </head>
 
   <body>
@@ -191,6 +191,9 @@
               <p id="game-score" aria-live="polite">Score <strong>0 / 3</strong><span id="game-best">Personal best: 0</span></p>
               <button type="button" id="game-button" disabled>Start challenge <span aria-hidden="true">→</span></button>
             </div>
+            <ol class="game-rounds" id="game-rounds" aria-label="Challenge progress">
+              <li aria-label="Round 1">1</li><li aria-label="Round 2">2</li><li aria-label="Round 3">3</li>
+            </ol>
             <p id="game-feedback" class="game-feedback" aria-live="polite">Choose a county on the map each round to score a trail mark.</p>
           </div>
           <div class="mission-grid" id="mission-grid">
