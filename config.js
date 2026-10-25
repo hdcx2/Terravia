@@ -7,4 +7,5 @@
 //
 // Leave empty ("") only when the API serves this site from the SAME origin
 // (i.e. you ran it with TERRAVIA_SERVE_SITE=1).
-window.TERRAVIA_API = "https://terravia-api.onrender.com";
+const isLocalDemo = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+window.TERRAVIA_API = isLocalDemo ? '' : "https://terravia-api.onrender.com";

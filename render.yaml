@@ -21,10 +21,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.6"
-      # Restrict CORS to the GitHub Pages origin. Change if you use a custom
-      # domain. Use "*" only for quick throwaway demos.
+      # Keep both the original site and the fork's GitHub Pages origin allowed.
+      # Change this list if either site moves to a custom domain.
       - key: TERRAVIA_CORS_ORIGINS
-        value: "https://wilsonz347.github.io"
+        value: "https://wilsonz347.github.io,https://hdcx2.github.io"
       # Rule-based parser by default (no key needed, demo-safe). To enable a
       # hosted LLM, set HOTSPOT_LLM_PROVIDER=openai and add OPENAI_API_KEY as a
       # secret in the Render dashboard (do not commit keys).

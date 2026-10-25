@@ -93,8 +93,34 @@ if (chatForm) {
   };
 
   const starters = document.getElementById('chat-starters');
+  const missionGrid = document.getElementById('mission-grid');
+  const MISSION_KEY = 'terravia-field-guide-v1';
+  let exploredMissions = [];
+  try {
+    exploredMissions = JSON.parse(localStorage.getItem(MISSION_KEY) || '[]');
+    if (!Array.isArray(exploredMissions)) exploredMissions = [];
+    exploredMissions = exploredMissions.filter((id) => ['diabetes', 'access', 'data'].includes(id));
+  } catch (err) {
+    exploredMissions = [];
+  }
 
-  const ask = async (question) => {
+  const renderMissionProgress = () => {
+    if (!missionGrid) return;
+    missionGrid.querySelectorAll('[data-mission]').forEach((card) => {
+      card.classList.toggle('is-complete', exploredMissions.includes(card.dataset.mission));
+    });
+    const count = document.getElementById('mission-count');
+    if (count) count.textContent = `${exploredMissions.length} of 3`;
+  };
+  const completeMission = (id) => {
+    if (!id || exploredMissions.includes(id)) return;
+    exploredMissions.push(id);
+    try { localStorage.setItem(MISSION_KEY, JSON.stringify(exploredMissions)); } catch (err) { /* progress stays for this visit */ }
+    renderMissionProgress();
+  };
+  renderMissionProgress();
+
+  const ask = async (question, missionId = null) => {
     question = (question || '').trim();
     if (!question) return;
 
@@ -122,6 +148,7 @@ if (chatForm) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderBotAnswer(pending, data.answer);
+      completeMission(missionId);
     } catch (err) {
       pending.classList.remove('is-pending');
       pending.textContent =
@@ -145,6 +172,15 @@ if (chatForm) {
       btn.addEventListener('click', () => ask(btn.textContent));
     });
   }
+
+  if (missionGrid) {
+    missionGrid.querySelectorAll('.mission-action').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('terravia:mission', { detail: { measure: btn.dataset.measure } }));
+        ask(btn.dataset.question, btn.closest('[data-mission]').dataset.mission);
+      });
+    });
+  }
 }
 
 
@@ -156,27 +192,91 @@ function initTerraviaMap() {
   const mapSvgEl = document.getElementById('map-svg');
   if (!mapSvgEl) return;
   const caption = document.getElementById('map-caption');
-  if (typeof window.d3 === 'undefined') {
-    if (caption) caption.textContent = 'Map library failed to load.';
-    return;
-  }
-  const svg = d3.select('#map-svg');
   const tooltip = document.getElementById('map-tooltip');
   const legend = document.getElementById('map-legend');
   const selectEl = document.getElementById('map-measure');
+  const selectionCopy = document.getElementById('map-selection-copy');
+  const askCounty = document.getElementById('map-ask-county');
 
   const W = 680, H = 420;
-  svg.attr('viewBox', `0 0 ${W} ${H}`)
-     .attr('preserveAspectRatio', 'xMidYMid meet')
-     .style('width', '100%')
-     .style('height', 'auto');
+  const NS = 'http://www.w3.org/2000/svg';
+  mapSvgEl.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  mapSvgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
   let geo = null;
+  let currentRows = new Map();
+  let currentLabel = '';
+  let selectedCounty = null;
+  let pendingMeasure = null;
+  let offlineMeasures = new Map();
+  const gamePanel = document.getElementById('map-game');
+  const gamePrompt = document.getElementById('game-prompt');
+  const gameScore = document.querySelector('#game-score strong');
+  const gameBest = document.getElementById('game-best');
+  const gameButton = document.getElementById('game-button');
+  const gameFeedback = document.getElementById('game-feedback');
+  const GAME_BEST_KEY = 'terravia-map-scout-best-v1';
+  let challengeActive = false;
+  let challengeAwaitingPick = false;
+  let challengeRounds = 0;
+  let challengePoints = 0;
+  let challengeMeasure = null;
+  let availableMeasures = [];
+  let personalBest = 0;
+  try { personalBest = Number(localStorage.getItem(GAME_BEST_KEY)) || 0; } catch (err) { /* best score is optional */ }
+  if (gameBest) gameBest.textContent = `Personal best: ${personalBest}`;
 
   const colorFor = (v, lo, hi) => {
-    // Sequential green ramp (matches the site palette). Guard a flat range.
-    const t = hi > lo ? (v - lo) / (hi - lo) : 0.5;
-    return d3.interpolate('#eaf2e9', '#2f6b47')(t);
+    const t = Math.max(0, Math.min(1, hi > lo ? (v - lo) / (hi - lo) : 0.5));
+    const start = [234, 242, 233], end = [47, 107, 71];
+    return `rgb(${start.map((value, i) => Math.round(value + (end[i] - value) * t)).join(',')})`;
+  };
+
+  const parseCsv = (text) => {
+    const records = [];
+    let row = [], cell = '', quoted = false;
+    for (let i = 0; i < text.length; i += 1) {
+      const char = text[i];
+      if (quoted && char === '"' && text[i + 1] === '"') { cell += '"'; i += 1; }
+      else if (char === '"') quoted = !quoted;
+      else if (char === ',' && !quoted) { row.push(cell); cell = ''; }
+      else if ((char === '\n' || char === '\r') && !quoted) {
+        if (char === '\r' && text[i + 1] === '\n') i += 1;
+        row.push(cell); records.push(row); row = []; cell = '';
+      } else cell += char;
+    }
+    if (cell || row.length) { row.push(cell); records.push(row); }
+    const [headers, ...lines] = records;
+    return lines.filter((line) => line.length === headers.length).map((line) =>
+      Object.fromEntries(headers.map((header, i) => [header, line[i]])));
+  };
+
+  const loadOfflineSnapshot = async () => {
+    const [geometryResponse, csvResponse] = await Promise.all([
+      fetch('data/ma_counties.geojson'),
+      fetch('data/snapshot_places_ma.csv'),
+    ]);
+    if (!geometryResponse.ok || !csvResponse.ok) throw new Error('Local map snapshot is unavailable.');
+    const [geometry, csv] = await Promise.all([geometryResponse.json(), csvResponse.text()]);
+    const sourceRows = parseCsv(csv).filter((row) => row.measure_kind === 'condition');
+    const labels = {
+      DIABETES: 'Diabetes', CASTHMA: 'Current asthma', BPHIGH: 'High blood pressure',
+      COPD: 'COPD', OBESITY: 'Obesity', MHLTH: 'Frequent mental distress', CSMOKING: 'Current smoking',
+    };
+    const measures = Array.from(new Set(sourceRows.map((row) => row.measureid))).map((id) => ({ id, label: labels[id] || id }));
+    const rowsByMeasure = new Map();
+    sourceRows.forEach((row) => {
+      if (!rowsByMeasure.has(row.measureid)) rowsByMeasure.set(row.measureid, []);
+      rowsByMeasure.get(row.measureid).push({
+        locationid: row.locationid, county: row.locationname, value: Number(row.data_value),
+        low: Number(row.low_ci), high: Number(row.high_ci), population: Number(row.total_population),
+      });
+    });
+    offlineMeasures = new Map(Array.from(rowsByMeasure, ([id, rows]) => [id, {
+      measureid: id, label: labels[id] || id, source: 'CDC PLACES snapshot', data_year: 2023,
+      min: Math.min(...rows.map((row) => row.value)), max: Math.max(...rows.map((row) => row.value)), rows,
+    }]));
+    return { geometry, measures };
   };
 
   const drawLegend = (lo, hi) => {
@@ -188,43 +288,179 @@ function initTerraviaMap() {
 
   const showTip = (evt, county, d) => {
     tooltip.hidden = false;
-    tooltip.innerHTML =
-      `<strong>${county}</strong><br>${d.label}: ${d.value.toFixed(1)}%` +
-      `<br><span class="map-tip-ci">95% CI ${d.low.toFixed(1)} to ${d.high.toFixed(1)}</span>`;
+    tooltip.textContent = `${county} · ${d.label}: ${d.value.toFixed(1)}% (95% CI ${d.low.toFixed(1)}–${d.high.toFixed(1)})`;
     const r = mapSvgEl.getBoundingClientRect();
-    tooltip.style.left = `${evt.clientX - r.left + 12}px`;
-    tooltip.style.top = `${evt.clientY - r.top + 12}px`;
+    const x = evt.clientX ?? r.left + r.width / 2;
+    const y = evt.clientY ?? r.top + r.height / 2;
+    tooltip.style.left = `${Math.max(4, Math.min(r.width - 240, x - r.left + 10))}px`;
+    tooltip.style.top = `${Math.max(4, Math.min(r.height - 56, y - r.top + 10))}px`;
   };
   const hideTip = () => { tooltip.hidden = true; };
 
+  const coordinatesOf = (geometry) => {
+    if (!geometry) return [];
+    const nested = geometry.coordinates;
+    const result = [];
+    const visit = (value) => {
+      if (Array.isArray(value) && typeof value[0] === 'number') result.push(value);
+      else if (Array.isArray(value)) value.forEach(visit);
+    };
+    visit(nested);
+    return result;
+  };
+
+  const makeProjection = () => {
+    const all = geo.features.flatMap((f) => coordinatesOf(f.geometry));
+    const bounds = all.reduce((b, p) => ({
+      minX: Math.min(b.minX, p[0]), maxX: Math.max(b.maxX, p[0]),
+      minY: Math.min(b.minY, p[1]), maxY: Math.max(b.maxY, p[1]),
+    }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+    const { minX, maxX, minY, maxY } = bounds;
+    const pad = 16;
+    const scale = Math.min((W - pad * 2) / (maxX - minX), (H - pad * 2) / (maxY - minY));
+    const offsetX = (W - (maxX - minX) * scale) / 2;
+    const offsetY = (H - (maxY - minY) * scale) / 2;
+    return ([x, y]) => [offsetX + (x - minX) * scale, H - offsetY - (y - minY) * scale];
+  };
+
+  const featurePath = (geometry, project) => {
+    if (!geometry) return '';
+    const polygons = geometry.type === 'Polygon' ? [geometry.coordinates]
+      : geometry.type === 'MultiPolygon' ? geometry.coordinates : [];
+    return polygons.flatMap((rings) => rings.map((ring) => ring.map((point, i) => {
+      const [x, y] = project(point);
+      return `${i ? 'L' : 'M'}${x.toFixed(2)},${y.toFixed(2)}`;
+    }).join(' ') + ' Z')).join(' ');
+  };
+
+  const selectFeature = (evt, feature) => {
+    const row = currentRows.get(String(feature.properties.locationid));
+    if (!row) return;
+    if (challengeActive && challengeAwaitingPick) {
+      const highest = Math.max(...Array.from(currentRows.values(), (item) => item.value));
+      challengeAwaitingPick = false;
+      challengeRounds += 1;
+      if (Math.abs(row.value - highest) < 0.0001) {
+        challengePoints += 1;
+        gameFeedback.textContent = `Correct! ${row.county} has the highest ${currentLabel} estimate (${row.value.toFixed(1)}%). Trail mark earned.`;
+      } else {
+        const answer = Array.from(currentRows.values()).find((item) => Math.abs(item.value - highest) < 0.0001);
+        gameFeedback.textContent = `Good try. ${answer.county} is highest for ${currentLabel} at ${highest.toFixed(1)}%. Take that pattern with you to the next round.`;
+      }
+      gameScore.textContent = `${challengePoints} / 3`;
+      gameButton.textContent = challengeRounds < 3 ? `Next round (${challengeRounds + 1}/3) →` : 'See results →';
+      gamePanel.classList.toggle('is-playing', challengeRounds < 3);
+    }
+    selectedCounty = row;
+    mapSvgEl.querySelectorAll('.county').forEach((path) => path.classList.toggle('is-selected', path.dataset.locationid === String(row.locationid)));
+    selectionCopy.textContent = `${row.county}: ${currentLabel} is estimated at ${row.value.toFixed(1)}% (95% CI ${row.low.toFixed(1)}–${row.high.toFixed(1)}%).`;
+    askCounty.hidden = false;
+    showTip(evt, row.county, { ...row, label: currentLabel });
+  };
+
+  const advanceChallenge = () => {
+    if (challengeRounds >= 3) {
+      challengeActive = false;
+      gamePanel.classList.remove('is-playing');
+      const newRecord = challengePoints > personalBest;
+      if (newRecord) {
+        personalBest = challengePoints;
+        try { localStorage.setItem(GAME_BEST_KEY, String(personalBest)); } catch (err) { /* best score is optional */ }
+        gameBest.textContent = `Personal best: ${personalBest}`;
+      }
+      gamePrompt.textContent = `Challenge complete: ${challengePoints} of 3 trail marks${newRecord ? ' — a new personal best!' : '.'}`;
+      gameFeedback.textContent = challengePoints === 3
+        ? 'Brilliant map reading. You spotted every county hotspot.'
+        : 'Nice exploring. Try again to beat your personal best.';
+      gameButton.textContent = 'Play again →';
+      return;
+    }
+    challengeActive = true;
+    challengeMeasure = availableMeasures[Math.floor(Math.random() * availableMeasures.length)].id;
+    selectEl.value = challengeMeasure;
+    render(challengeMeasure);
+    document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  if (gameButton) {
+    gameButton.addEventListener('click', () => {
+      if (!challengeActive && challengeRounds === 0) {
+        challengeRounds = 0;
+        challengePoints = 0;
+        gameScore.textContent = '0 / 3';
+        gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
+        gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
+        gameButton.textContent = 'Choose a county above ↑';
+        advanceChallenge();
+      } else if (challengeActive && !challengeAwaitingPick) {
+        if (challengeRounds >= 3) advanceChallenge();
+        else {
+          gameButton.textContent = 'Choose a county above ↑';
+          gamePrompt.textContent = `Round ${challengeRounds + 1}: find the county with the highest estimate. Click a county on the map.`;
+          advanceChallenge();
+        }
+      } else if (!challengeActive && challengeRounds >= 3) {
+        challengeRounds = 0;
+        challengePoints = 0;
+        gameScore.textContent = '0 / 3';
+        gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
+        gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
+        gameButton.textContent = 'Choose a county above ↑';
+        advanceChallenge();
+      }
+    });
+  }
+
   const render = async (measureid) => {
     try {
-      const res = await fetch(`${TERRAVIA_API}/measures/${measureid}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const byId = new Map(data.rows.map((r) => [String(r.locationid), r]));
-
-      const projection = d3.geoMercator().fitSize([W, H], geo);
-      const path = d3.geoPath(projection);
-
-      const counties = svg.selectAll('path.county').data(geo.features, (f) => f.properties.locationid);
-      counties.join(
-        (enter) => enter.append('path').attr('class', 'county').attr('d', path),
-        (update) => update,
-      )
-        .attr('d', path)
-        .attr('fill', (f) => {
-          const row = byId.get(String(f.properties.locationid));
-          return row ? colorFor(row.value, data.min, data.max) : '#e6e8e4';
-        })
-        .attr('stroke', '#ffffff')
-        .attr('stroke-width', 0.8)
-        .style('cursor', 'pointer')
-        .on('mousemove', (evt, f) => {
-          const row = byId.get(String(f.properties.locationid));
-          if (row) showTip(evt, row.county, { ...row, label: data.label });
-        })
-        .on('mouseleave', hideTip);
+      let data;
+      try {
+        const res = await fetch(`${TERRAVIA_API}/measures/${measureid}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        data = await res.json();
+      } catch (apiError) {
+        data = offlineMeasures.get(measureid);
+        if (!data) throw apiError;
+      }
+      currentRows = new Map(data.rows.map((r) => [String(r.locationid), r]));
+      currentLabel = data.label;
+      if (challengeActive && data.measureid === challengeMeasure) {
+        challengeAwaitingPick = true;
+        gamePrompt.textContent = `Round ${challengeRounds + 1}: click the county with the highest ${currentLabel} estimate.`;
+        gameButton.textContent = 'Your pick is on the map ↑';
+      }
+      const project = makeProjection();
+      mapSvgEl.replaceChildren();
+      geo.features.forEach((feature) => {
+        const id = String(feature.properties.locationid);
+        const row = currentRows.get(id);
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('class', `county${selectedCounty && String(selectedCounty.locationid) === id ? ' is-selected' : ''}`);
+        path.setAttribute('d', featurePath(feature.geometry, project));
+        path.setAttribute('fill', row ? colorFor(row.value, data.min, data.max) : '#e6e8e4');
+        path.setAttribute('stroke', '#fff');
+        path.setAttribute('stroke-width', '1.5');
+        path.setAttribute('tabindex', '0');
+        path.setAttribute('role', 'button');
+        path.setAttribute('aria-label', row ? `${row.county}: ${data.label} ${row.value.toFixed(1)} percent. Select for details.` : feature.properties.name);
+        path.dataset.locationid = id;
+        path.addEventListener('mousemove', (evt) => row && showTip(evt, row.county, { ...row, label: data.label }));
+        path.addEventListener('mouseleave', hideTip);
+        path.addEventListener('click', (evt) => selectFeature(evt, feature));
+        path.addEventListener('focus', (evt) => row && showTip(evt, row.county, { ...row, label: data.label }));
+        path.addEventListener('blur', hideTip);
+        path.addEventListener('keydown', (evt) => {
+          if (evt.key === 'Enter' || evt.key === ' ') { evt.preventDefault(); selectFeature(evt, feature); }
+        });
+        mapSvgEl.append(path);
+      });
+      if (selectedCounty) {
+        const fresh = currentRows.get(String(selectedCounty.locationid));
+        if (fresh) {
+          selectedCounty = fresh;
+          selectionCopy.textContent = `${fresh.county}: ${currentLabel} is estimated at ${fresh.value.toFixed(1)}% (95% CI ${fresh.low.toFixed(1)}–${fresh.high.toFixed(1)}%).`;
+        }
+      }
 
       drawLegend(data.min, data.max);
       caption.textContent =
@@ -238,27 +474,61 @@ function initTerraviaMap() {
   const init = async () => {
     caption.textContent = 'Loading map…';
     try {
-      const [gj, ms] = await Promise.all([
-        fetch(`${TERRAVIA_API}/geojson`).then((r) => {
+      let gj, ms;
+      try {
+        [gj, ms] = await Promise.all([
+          fetch(`${TERRAVIA_API}/geojson`).then((r) => {
           if (!r.ok) throw new Error(`geojson HTTP ${r.status}`);
           return r.json();
-        }),
-        fetch(`${TERRAVIA_API}/measures`).then((r) => {
+          }),
+          fetch(`${TERRAVIA_API}/measures`).then((r) => {
           if (!r.ok) throw new Error(`measures HTTP ${r.status}`);
           return r.json();
-        }),
-      ]);
+          }),
+        ]);
+      } catch (apiError) {
+        const local = await loadOfflineSnapshot();
+        gj = local.geometry;
+        ms = local;
+        caption.textContent = 'Using the included CDC snapshot while the live map service is unavailable.';
+      }
       geo = gj;
+      availableMeasures = ms.measures;
       selectEl.innerHTML = ms.measures
         .map((m) => `<option value="${m.id}">${m.label}</option>`)
         .join('');
       selectEl.addEventListener('change', () => render(selectEl.value));
-      await render(ms.measures[0].id);
+      const initialMeasure = pendingMeasure && ms.measures.some((m) => m.id === pendingMeasure)
+        ? pendingMeasure : ms.measures[0].id;
+      pendingMeasure = null;
+      selectEl.value = initialMeasure;
+      gameButton.disabled = false;
+      await render(initialMeasure);
     } catch (err) {
       caption.textContent = `Map unavailable: ${err.message}`;
       console.error('Terravia map init error:', err);
     }
   };
+
+  askCounty.addEventListener('click', () => {
+    if (!selectedCounty) return;
+    const input = document.getElementById('chat-input');
+    if (input) input.value = `Tell me about ${selectedCounty.county}`;
+    document.querySelector('.chat-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    input?.focus({ preventScroll: true });
+  });
+
+  window.addEventListener('terravia:mission', (evt) => {
+    const measure = evt.detail?.measure;
+    if (!measure || !selectEl) return;
+    if (!Array.from(selectEl.options).some((option) => option.value === measure)) {
+      pendingMeasure = measure;
+      return;
+    }
+    selectEl.value = measure;
+    selectEl.dispatchEvent(new Event('change'));
+    document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 
   init();
 }
