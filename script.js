@@ -93,34 +93,7 @@ if (chatForm) {
   };
 
   const starters = document.getElementById('chat-starters');
-  const missionGrid = document.getElementById('mission-grid');
-  const MISSION_KEY = 'terravia-field-guide-v1';
-  let exploredMissions = [];
-  try {
-    exploredMissions = JSON.parse(localStorage.getItem(MISSION_KEY) || '[]');
-    if (!Array.isArray(exploredMissions)) exploredMissions = [];
-    exploredMissions = exploredMissions.filter((id) => ['diabetes', 'access', 'data'].includes(id));
-  } catch (err) {
-    exploredMissions = [];
-  }
-
-  const renderMissionProgress = () => {
-    if (!missionGrid) return;
-    missionGrid.querySelectorAll('[data-mission]').forEach((card) => {
-      card.classList.toggle('is-complete', exploredMissions.includes(card.dataset.mission));
-    });
-    const count = document.getElementById('mission-count');
-    if (count) count.textContent = `${exploredMissions.length} of 3`;
-  };
-  const completeMission = (id) => {
-    if (!id || exploredMissions.includes(id)) return;
-    exploredMissions.push(id);
-    try { localStorage.setItem(MISSION_KEY, JSON.stringify(exploredMissions)); } catch (err) { /* progress stays for this visit */ }
-    renderMissionProgress();
-  };
-  renderMissionProgress();
-
-  const ask = async (question, missionId = null) => {
+  const ask = async (question) => {
     question = (question || '').trim();
     if (!question) return;
 
@@ -148,7 +121,6 @@ if (chatForm) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       renderBotAnswer(pending, data.answer);
-      completeMission(missionId);
     } catch (err) {
       pending.classList.remove('is-pending');
       pending.textContent =
@@ -173,14 +145,6 @@ if (chatForm) {
     });
   }
 
-  if (missionGrid) {
-    missionGrid.querySelectorAll('.mission-action').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        window.dispatchEvent(new CustomEvent('terravia:mission', { detail: { measure: btn.dataset.measure } }));
-        ask(btn.dataset.question, btn.closest('[data-mission]').dataset.mission);
-      });
-    });
-  }
 }
 
 
@@ -207,37 +171,7 @@ function initTerraviaMap() {
   let currentRows = new Map();
   let currentLabel = '';
   let selectedCounty = null;
-  let pendingMeasure = null;
   let offlineMeasures = new Map();
-  const gamePanel = document.getElementById('map-game');
-  const gamePrompt = document.getElementById('game-prompt');
-  const gameScore = document.querySelector('#game-score strong');
-  const gameBest = document.getElementById('game-best');
-  const gameButton = document.getElementById('game-button');
-  const gameFeedback = document.getElementById('game-feedback');
-  const gameRounds = document.getElementById('game-rounds');
-  const GAME_BEST_KEY = 'terravia-map-scout-best-v1';
-  let challengeActive = false;
-  let challengeAwaitingPick = false;
-  let challengeRounds = 0;
-  let challengePoints = 0;
-  let challengeMeasure = null;
-  let challengeLoading = false;
-  let availableMeasures = [];
-  let personalBest = 0;
-  try { personalBest = Number(localStorage.getItem(GAME_BEST_KEY)) || 0; } catch (err) { /* best score is optional */ }
-  if (gameBest) gameBest.textContent = `Personal best: ${personalBest}`;
-
-  const updateRoundProgress = () => {
-    if (!gameRounds) return;
-    gameRounds.querySelectorAll('li').forEach((step, index) => {
-      const complete = index < challengeRounds;
-      const current = challengeActive && (challengeAwaitingPick || challengeLoading) && index === challengeRounds;
-      step.classList.toggle('is-complete', complete);
-      step.classList.toggle('is-current', current);
-      step.setAttribute('aria-current', current ? 'step' : 'false');
-    });
-  };
 
   const colorFor = (v, lo, hi) => {
     const t = Math.max(0, Math.min(1, hi > lo ? (v - lo) / (hi - lo) : 0.5));
@@ -349,111 +283,12 @@ function initTerraviaMap() {
   const selectFeature = (evt, feature) => {
     const row = currentRows.get(String(feature.properties.locationid));
     if (!row) return;
-    if (challengeActive && challengeAwaitingPick) {
-      const highest = Math.max(...Array.from(currentRows.values(), (item) => item.value));
-      challengeAwaitingPick = false;
-      challengeRounds += 1;
-      if (Math.abs(row.value - highest) < 0.0001) {
-        challengePoints += 1;
-        gameFeedback.textContent = `Correct! ${row.county} has the highest ${currentLabel} estimate (${row.value.toFixed(1)}%). Trail mark earned.`;
-      } else {
-        const answer = Array.from(currentRows.values()).find((item) => Math.abs(item.value - highest) < 0.0001);
-        gameFeedback.textContent = `Good try. ${answer.county} is highest for ${currentLabel} at ${highest.toFixed(1)}%. Take that pattern with you to the next round.`;
-        mapSvgEl.querySelector(`[data-locationid="${answer.locationid}"]`)?.classList.add('is-game-answer');
-      }
-      mapSvgEl.querySelector(`[data-locationid="${row.locationid}"]`)?.classList.add(
-        Math.abs(row.value - highest) < 0.0001 ? 'is-game-correct' : 'is-game-miss'
-      );
-      gameScore.textContent = `${challengePoints} / 3`;
-      gameButton.textContent = challengeRounds < 3 ? `Next round (${challengeRounds + 1}/3) →` : 'See results →';
-      gameButton.disabled = false;
-      updateRoundProgress();
-      gamePanel.classList.toggle('is-playing', challengeRounds < 3);
-    }
     selectedCounty = row;
     mapSvgEl.querySelectorAll('.county').forEach((path) => path.classList.toggle('is-selected', path.dataset.locationid === String(row.locationid)));
     selectionCopy.textContent = `${row.county}: ${currentLabel} is estimated at ${row.value.toFixed(1)}% (95% CI ${row.low.toFixed(1)}–${row.high.toFixed(1)}%).`;
     askCounty.hidden = false;
     showTip(evt, row.county, { ...row, label: currentLabel });
   };
-
-  const advanceChallenge = () => {
-    if (challengeRounds >= 3) {
-      challengeActive = false;
-      gamePanel.classList.remove('is-playing');
-      const newRecord = challengePoints > personalBest;
-      if (newRecord) {
-        personalBest = challengePoints;
-        try { localStorage.setItem(GAME_BEST_KEY, String(personalBest)); } catch (err) { /* best score is optional */ }
-        gameBest.textContent = `Personal best: ${personalBest}`;
-      }
-      gamePrompt.textContent = `Challenge complete: ${challengePoints} of 3 trail marks${newRecord ? ' — a new personal best!' : '.'}`;
-      gameFeedback.textContent = challengePoints === 3
-        ? 'Brilliant map reading. You spotted every county hotspot.'
-        : 'Nice exploring. Try again to beat your personal best.';
-      gameButton.textContent = 'Play again →';
-      gameButton.disabled = false;
-      selectEl.disabled = false;
-      challengeAwaitingPick = false;
-      updateRoundProgress();
-      return;
-    }
-    challengeActive = true;
-    challengeAwaitingPick = false;
-    challengeLoading = true;
-    gamePanel.classList.add('is-playing');
-    gameButton.disabled = true;
-    gameButton.textContent = 'Loading round…';
-    selectEl.disabled = true;
-    updateRoundProgress();
-    challengeMeasure = availableMeasures[Math.floor(Math.random() * availableMeasures.length)].id;
-    selectEl.value = challengeMeasure;
-    render(challengeMeasure).then((loaded) => {
-      challengeLoading = false;
-      if (loaded && challengeAwaitingPick) {
-        gameButton.textContent = 'Pick a county on the map ↑';
-        gameButton.disabled = true;
-      } else {
-        challengeActive = false;
-        selectEl.disabled = false;
-        gameButton.disabled = false;
-        gameButton.textContent = 'Try this round again →';
-        gameFeedback.textContent = 'The county map did not load. Try the round again in a moment.';
-      }
-      updateRoundProgress();
-    });
-    document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  if (gameButton) {
-    gameButton.addEventListener('click', () => {
-      if (challengeActive && !challengeAwaitingPick) {
-        if (challengeRounds >= 3) {
-          advanceChallenge();
-        } else {
-          gamePrompt.textContent = `Round ${challengeRounds + 1}: find the county with the highest estimate. Click a county on the map.`;
-          advanceChallenge();
-        }
-      } else if (!challengeActive && challengeRounds >= 3) {
-        challengeRounds = 0;
-        challengePoints = 0;
-        gameScore.textContent = '0 / 3';
-        gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
-        gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
-        gameButton.textContent = 'Loading round…';
-        advanceChallenge();
-      } else if (!challengeActive && !challengeAwaitingPick) {
-        if (challengeRounds === 0) {
-          challengePoints = 0;
-          gameScore.textContent = '0 / 3';
-          gamePrompt.textContent = 'Round 1: find the county with the highest estimate. Click a county on the map.';
-          gameFeedback.textContent = 'Choose carefully—each round maps a different health measure.';
-        }
-        gameButton.textContent = 'Loading round…';
-        advanceChallenge();
-      }
-    });
-  }
 
   const render = async (measureid) => {
     try {
@@ -468,13 +303,6 @@ function initTerraviaMap() {
       }
       currentRows = new Map(data.rows.map((r) => [String(r.locationid), r]));
       currentLabel = data.label;
-      if (challengeActive && data.measureid === challengeMeasure) {
-        challengeAwaitingPick = true;
-        gamePrompt.textContent = `Round ${challengeRounds + 1}: click the county with the highest ${currentLabel} estimate.`;
-        gameButton.textContent = 'Pick a county on the map ↑';
-        gameButton.disabled = true;
-        updateRoundProgress();
-      }
       const project = makeProjection();
       mapSvgEl.replaceChildren();
       geo.features.forEach((feature) => {
@@ -541,17 +369,12 @@ function initTerraviaMap() {
         caption.textContent = 'Using the included CDC snapshot while the live map service is unavailable.';
       }
       geo = gj;
-      availableMeasures = ms.measures;
       selectEl.innerHTML = ms.measures
         .map((m) => `<option value="${m.id}">${m.label}</option>`)
         .join('');
       selectEl.addEventListener('change', () => render(selectEl.value));
-      const initialMeasure = pendingMeasure && ms.measures.some((m) => m.id === pendingMeasure)
-        ? pendingMeasure : ms.measures[0].id;
-      pendingMeasure = null;
+      const initialMeasure = ms.measures[0].id;
       selectEl.value = initialMeasure;
-      gameButton.disabled = false;
-      updateRoundProgress();
       await render(initialMeasure);
     } catch (err) {
       caption.textContent = `Map unavailable: ${err.message}`;
@@ -565,18 +388,6 @@ function initTerraviaMap() {
     if (input) input.value = `Tell me about ${selectedCounty.county}`;
     document.querySelector('.chat-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     input?.focus({ preventScroll: true });
-  });
-
-  window.addEventListener('terravia:mission', (evt) => {
-    const measure = evt.detail?.measure;
-    if (!measure || !selectEl) return;
-    if (!Array.from(selectEl.options).some((option) => option.value === measure)) {
-      pendingMeasure = measure;
-      return;
-    }
-    selectEl.value = measure;
-    selectEl.dispatchEvent(new Event('change'));
-    document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
   init();

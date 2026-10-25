@@ -8,9 +8,9 @@
       content="Terravia connects Massachusetts communities with clear information about health conditions and local resources."
     >
     <title>Terravia | Home</title>
-    <link rel="stylesheet" href="styles.css?v=7">
+    <link rel="stylesheet" href="styles.css?v=8">
     <script src="config.js?v=3"></script>
-    <script src="script.js?v=7" defer></script>
+    <script src="script.js?v=8" defer></script>
   </head>
 
   <body>
@@ -164,65 +164,6 @@
             <span id="map-selection-copy">Select a county to explore its estimate.</span>
             <button type="button" id="map-ask-county" hidden>Ask Terravia about this county <span aria-hidden="true">→</span></button>
           </div>
-        </section>
-
-        <section class="field-guide" aria-labelledby="field-guide-title">
-          <div class="field-guide-heading">
-            <div>
-              <p class="eyebrow">A little guided exploration</p>
-              <h2 id="field-guide-title">Your Terravia field guide</h2>
-              <p>Take a few short missions to discover what the county data can tell you.</p>
-            </div>
-            <div class="field-progress" aria-live="polite">
-              <span class="field-progress-mark" aria-hidden="true">✳</span>
-              <span><strong id="mission-count">0 of 3</strong><small>missions explored</small></span>
-            </div>
-          </div>
-          <div class="map-game" id="map-game">
-            <div class="map-game-intro">
-              <span class="map-game-icon" aria-hidden="true">✦</span>
-              <div>
-                <span class="mission-label">Three-round map challenge</span>
-                <h3>Map Scout</h3>
-                <p id="game-prompt">Pick the county with the highest estimate. Your score and personal best stay on this device.</p>
-              </div>
-            </div>
-            <div class="map-game-controls">
-              <p id="game-score" aria-live="polite">Score <strong>0 / 3</strong><span id="game-best">Personal best: 0</span></p>
-              <button type="button" id="game-button" disabled>Start challenge <span aria-hidden="true">→</span></button>
-            </div>
-            <ol class="game-rounds" id="game-rounds" aria-label="Challenge progress">
-              <li aria-label="Round 1">1</li><li aria-label="Round 2">2</li><li aria-label="Round 3">3</li>
-            </ol>
-            <p id="game-feedback" class="game-feedback" aria-live="polite">Choose a county on the map each round to score a trail mark.</p>
-          </div>
-          <div class="mission-grid" id="mission-grid">
-            <article class="mission-card" data-mission="diabetes">
-              <span class="mission-icon" aria-hidden="true">⌖</span>
-              <span class="mission-label">01 · Find a pattern</span>
-              <h3>Trace the diabetes map</h3>
-              <p>Find the Massachusetts county with the highest estimated diabetes prevalence.</p>
-              <button type="button" class="mission-action" data-measure="DIABETES" data-question="Where is diabetes highest?">Start mission <span aria-hidden="true">→</span></button>
-              <span class="mission-complete" aria-label="Mission explored">✓ Explored</span>
-            </article>
-            <article class="mission-card" data-mission="access">
-              <span class="mission-icon" aria-hidden="true">◇</span>
-              <span class="mission-label">02 · Connect the dots</span>
-              <h3>Look for an access gap</h3>
-              <p>Explore places where health burden is high and routine checkups are less common.</p>
-              <button type="button" class="mission-action" data-measure="CASTHMA" data-question="High asthma and low checkup areas">Start mission <span aria-hidden="true">→</span></button>
-              <span class="mission-complete" aria-label="Mission explored">✓ Explored</span>
-            </article>
-            <article class="mission-card" data-mission="data">
-              <span class="mission-icon" aria-hidden="true">✧</span>
-              <span class="mission-label">03 · Read the fine print</span>
-              <h3>Meet the estimates</h3>
-              <p>Learn what these numbers represent and why they are estimates, not patient counts.</p>
-              <button type="button" class="mission-action" data-measure="DIABETES" data-question="Are these patient counts?">Start mission <span aria-hidden="true">→</span></button>
-              <span class="mission-complete" aria-label="Mission explored">✓ Explored</span>
-            </article>
-          </div>
-          <p class="field-guide-note">No points or rankings—just a friendly guide to exploring community health data.</p>
         </section>
 
         <footer class="site-footer">
