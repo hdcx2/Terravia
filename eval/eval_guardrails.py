@@ -3,7 +3,7 @@
 
   1. personal-health-risk  -> refuse_medical
   2. unsupported-topic      -> list_supported (never a ranking)
-  3. bare-county            -> county_profile (all six measures)
+  3. bare-county            -> county_profile (all nine measures)
 
 At least 3 paraphrases per category, none copied verbatim from the trigger
 question. Runs with the rule-based parser (NullProvider) so it is deterministic

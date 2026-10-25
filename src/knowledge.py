@@ -47,7 +47,7 @@ KB: list[Snippet] = [
                   "dataset", "recent", "year", "how old", "updated", "reliable"),
         text=("The data is CDC PLACES, County Data, 2025 release (dataset "
               "swc5-untb on data.cdc.gov), filtered to Massachusetts. All "
-              "measures are data year 2023. It covers 14 counties and six "
+              "measures are data year 2023. It covers 14 counties and nine "
               "measures. These are model-based estimates, not counts of "
               "diagnosed patients."),
     ),

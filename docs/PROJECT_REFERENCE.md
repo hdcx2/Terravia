@@ -45,14 +45,15 @@ small API on Render.
 - **The full dataset** for Massachusetts has **40 measures × 14 counties = 560
   rows** (everything PLACES publishes: conditions, behaviors, screenings,
   disabilities, social needs). We pull from this via the Socrata API.
-- **What the app actually uses:** a deliberate **6-measure subset** of those 40: diabetes, asthma, high blood pressure, COPD (the conditions) + uninsured
-  (adults 18 to 64) and routine checkup (the access measures). This is the "clinical
+- **What the app actually uses:** a deliberate **9-measure subset** of those 40: diabetes, asthma, high blood pressure, COPD, obesity,
+  frequent mental distress, smoking (the conditions) + uninsured (adults 18 to 64)
+  and routine checkup (the access measures). This is the "clinical + behavioral
   set" we chose so the tool has a sharp, consistent focus (chronic-condition
   burden + access), rather than a shallow pass over everything.
-- **Size used:** 84 rows (6 measures × 14 counties). Small enough to cache
+- **Size used:** 126 rows (9 measures × 14 counties). Small enough to cache
   locally, so the app works **offline during a demo** and loads instantly.
-- **Why only 6 of 40?** A focused story demos better and is easier to validate.
-  The other 34 measures (stroke, depression, obesity, smoking, food/housing
+- **Why only 9 of 40?** A focused story demos better and is easier to validate.
+  The other 31 measures (stroke, depression, sleep, food/housing
   insecurity, etc.) are available in the same dataset and could be added by
   changing a config list: no new data source needed.
 
@@ -64,9 +65,8 @@ small API on Render.
 ### Data files in the repo
 | File | Measures | Rows | Role |
 |---|---|---|---|
-| `data/snapshot_places_ma.csv` | 6 (clinical) | 84 | **what the app loads** (offline snapshot) |
+| `data/snapshot_places_ma.csv` | 9 (clinical + behavioral) | 126 | **what the app loads** (offline snapshot) |
 | `data/places_ma_full.csv` | 40 (all) | 560 | full MA export: the complete menu of measures |
-| `data/places_ma_behavioral.csv` | 5 (behavioral) | 70 | alt set (smoking, mental distress, obesity, diabetes, checkup) |
 | `data/ma_counties.geojson` |: | 14 | county shapes for the map |
 | `data/snapshot_meta.json` |: |: | provenance record (dataset id, years, measures) |
 
@@ -86,7 +86,7 @@ Your question
 1. ROUTER: figures out what you're asking (a "structured query")
      │        e.g. {intent: ranking, condition: DIABETES, sort: desc}
      ▼
-2. DATA: runs that query over the 84-row dataset (plain table lookup)
+2. DATA: runs that query over the 126-row dataset (plain table lookup)
      │        returns the actual rows + numbers
      ▼
 3. ANSWER: writes a sentence using ONLY those returned numbers,
@@ -123,7 +123,7 @@ The router recognizes several intents, each with a tailored, grounded response:
 - **access_gap**: "high asthma and low checkups" → counties high-burden +
   low-access.
 - **county_profile**: a county named with no measure ("tell me about Hampden")
-  → all six measures for that county.
+  → all nine measures for that county.
 - **multi-condition**: "diabetes and asthma" → a ranking for *each* named
   condition (we don't silently drop the second one).
 - **dataset_info**: "what counties/years/conditions are covered" → answered from
@@ -132,7 +132,7 @@ The router recognizes several intents, each with a tailored, grounded response:
   "how recent is the data?") → answered from our **own curated project notes**
   (see §5), so the bot is helpful without inventing facts.
 - **Safety intents**: personal medical questions, unsupported topics (cancer,
-  obesity), disease-nature questions ("what causes diabetes"), and non-2023 years
+  stroke), disease-nature questions ("what causes diabetes"), and non-2023 years
   each get a specific, correct refusal/redirect **before** any data or AI runs.
 
 Each of these was hardened against paraphrases through repeated held-out testing
@@ -214,7 +214,7 @@ We didn't tune the model's weights: we constrained and tested it:
 | Choice | Why |
 |---|---|
 | **County level, Massachusetts only** | Small, clean, complete data; finishes in a hackathon window; a sharp focused story beats a shallow national one. |
-| **6-measure subset (of 40 available)** | A focused burden+access story demos better and is easy to validate; the other 34 measures are one config change away if we want them. |
+| **9-measure subset (of 40 available)** | A focused burden+access story demos better and is easy to validate; the other 31 measures are one config change away if we want them. |
 | **Numbers come from data, not the LLM** | Makes hallucinated statistics structurally impossible: essential for a health tool. |
 | **Rule-first routing** | Fast, deterministic, works offline; the LLM is a helper for hard phrasings, not a dependency. |
 | **Swappable LLM with a `null` default** | The demo can't break on a missing key or dead network; privacy option via local Ollama. |
@@ -249,8 +249,8 @@ We didn't tune the model's weights: we constrained and tested it:
   6-measure clinical slice. A behavioral slice (smoking, obesity, mental
   distress) was floating around too, which caused a "we don't have asthma"
   mix-up. Resolved by exporting the **full 40-measure MA dataset** so the
-  available menu is explicit, and documenting exactly which 6 the app uses and
-  why (see §3).
+  available menu is explicit, merging both slices into one 9-measure set, and
+  documenting exactly which 9 the app uses and why (see §3).
 - **Generic refusals on fair questions.** Legitimate questions ("what counties
   are included?", "what does the access gap mean?", "diabetes and asthma") kept
   hitting the generic "I can only answer…" message. Fixed by giving each a real

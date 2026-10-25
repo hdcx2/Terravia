@@ -114,7 +114,7 @@ def _ranking_body(result: Q.QueryResult, n: int = 5) -> str:
 
 
 def _county_profile(df: pd.DataFrame, county: str) -> Answer:
-    """All six measures for one county, with CI and population."""
+    """All nine measures for one county, with CI and population."""
     sub = df[df["locationname"] == county]
     if sub.empty:
         return Answer(f"I don't have data for {county} County.\n\n"
