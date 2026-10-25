@@ -23,7 +23,7 @@ from .llm import LLMProvider, get_provider
 # Intents
 RANKING, LOOKUP, ACCESS_GAP, REFUSE_MEDICAL, OUT_OF_SCOPE = (
     "ranking", "lookup", "access_gap", "refuse_medical", "out_of_scope")
-COUNTY_PROFILE = "county_profile"   # a county named with no measure -> all six
+COUNTY_PROFILE = "county_profile"   # a county named with no measure -> all nine
 LIST_SUPPORTED = "list_supported"   # unsupported condition -> show capabilities
 UNSUPPORTED_YEAR = "unsupported_year"  # a year other than the data year
 DATASET_INFO = "dataset_info"       # questions ABOUT the data (counties, years, coverage)
@@ -370,7 +370,7 @@ def route(question: str, provider: LLMProvider | None = None) -> StructuredQuery
     # Greetings / thanks / chit-chat -> warm, inviting reply (not a refusal).
     if _is_greeting(question):
         return StructuredQuery(GREETING, parser="guardrail")
-    # Unsupported health topic (cancer, obesity, ...) -> list what IS supported,
+    # Unsupported health topic (cancer, stroke, ...) -> list what IS supported,
     # before any parsing, so we never show a ranking for an unnamed measure.
     if _names_unsupported_topic(question):
         return StructuredQuery(LIST_SUPPORTED, parser="guardrail")

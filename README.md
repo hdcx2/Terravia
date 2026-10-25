@@ -41,7 +41,7 @@ live in the same dataset and can be added by editing the measure list in
 ### Reproduce the pull
 
 ```sh
-# The 6 measures the app uses, for MA counties:
+# The 9 measures the app uses, for MA counties:
 curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=Crude%20prevalence&\$where=measureid%20in('DIABETES','CASTHMA','BPHIGH','COPD','OBESITY','MHLTH','CSMOKING','ACCESS2','CHECKUP')&\$limit=5000"
 
 # The FULL set (all 40 measures) for MA counties:
@@ -54,7 +54,6 @@ curl "https://data.cdc.gov/resource/swc5-untb.json?stateabbr=MA&data_value_type=
 |---|---|---|
 | `snapshot_places_ma.csv` | the 9-measure clinical+behavioral set: **what the app loads** | 126 |
 | `places_ma_full.csv` | all 40 PLACES measures for MA (the complete menu) | 560 |
-| `places_ma_behavioral.csv` | alt set: smoking, mental distress, obesity, diabetes, checkup | 70 |
 | `ma_counties.geojson` | county boundary shapes for the map | 14 |
 | `snapshot_meta.json` | provenance record (dataset id, URL, years, measures) |: |
 

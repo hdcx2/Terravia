@@ -35,7 +35,7 @@ class Measure:
     data_year: int          # per-measure BRFSS year (all 2023 in this slice)
 
 
-# Registry: the 6 measures in scope. Order = display order.
+# Registry: the 9 measures in scope. Order = display order.
 MEASURES: dict[str, Measure] = {
     "DIABETES": Measure("DIABETES", "Diabetes",
                         ("diabetes", "diabetic"), "condition", True, 2023),
